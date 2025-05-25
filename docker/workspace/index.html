@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Automation Sandbox</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .service {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .service h3 {
+            margin-top: 0;
+            color: #3498db;
+        }
+        .links {
+            margin-top: 20px;
+        }
+        .links a {
+            display: inline-block;
+            margin-right: 15px;
+            text-decoration: none;
+            color: #3498db;
+            padding: 8px 15px;
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .links a:hover {
+            background-color: #3498db;
+            color: white;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 5px solid #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Browser Automation Sandbox</h1>
+        
+        <div class="status">
+            <p>All services are running. This environment provides browser automation capabilities with VNC access.</p>
+            <p id="timestamp">Server time: Loading...</p>
+        </div>
+        
+        <div class="service">
+            <h3>VNC Access</h3>
+            <p>Connect to the VNC server to view and control the virtual display:</p>
+            <ul>
+                <li>VNC Server: <code>localhost:5901</code> (Passwordless access)</li>
+                <li>Resolution: 1920x1080</li>
+            </ul>
+        </div>
+        
+        <div class="service">
+            <h3>noVNC Access</h3>
+            <p>Access the virtual display through your web browser:</p>
+            <ul>
+                <li>URL: <a href="/vnc/" target="_blank">Open noVNC</a></li>
+                <li>No password required</li>
+            </ul>
+        </div>
+        
+        <div class="service">
+            <h3>Browser API</h3>
+            <p>RESTful API for browser automation:</p>
+            <ul>
+                <li>API Endpoint: <code>/api/</code></li>
+                <li>Documentation: <a href="/docs" target="_blank">API Docs</a></li>
+            </ul>
+        </div>
+        
+        <div class="links">
+            <a href="/vnc/" target="_blank">Open noVNC</a>
+            <a href="/docs" target="_blank">API Documentation</a>
+            <a href="/health" target="_blank">Service Health</a>
+        </div>
+    </div>
+
+    <script>
+        // Update timestamp every 5 seconds
+        function updateTimestamp() {
+            fetch('/health')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('timestamp').textContent = 'Server time: ' + data.timestamp;
+                })
+                .catch(err => {
+                    console.error('Error fetching health data:', err);
+                });
+        }
+        
+        // Initial update and set interval
+        updateTimestamp();
+        setInterval(updateTimestamp, 5000);
+    </script>
+</body>
+</html>

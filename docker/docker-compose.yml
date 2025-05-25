@@ -1,0 +1,47 @@
+services:
+  compose:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: ${DOCKERFILE:-Dockerfile}
+      args:
+        TARGETPLATFORM: ${TARGETPLATFORM:-linux/amd64}
+    image: roloritun/compose:0.0.1
+    ports:
+      - "6080:6080"  # noVNC web interface
+      
+      - "5901:5901"  # VNC port
+      - "9222:9222"  # Chrome remote debugging port
+      - "8000:8000"  # API server port
+      - "8080:8080"  # HTTP server port
+    environment:
+      - ANONYMIZED_TELEMETRY=${ANONYMIZED_TELEMETRY:-false}
+      - CHROME_PATH=/usr/bin/google-chrome
+      - CHROME_USER_DATA=/app/data/chrome_data
+      - CHROME_PERSISTENT_SESSION=${CHROME_PERSISTENT_SESSION:-false}
+      - CHROME_CDP=${CHROME_CDP:-http://localhost:9222}
+      - DISPLAY=:99
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+      - RESOLUTION=${RESOLUTION:-1024x768x24}
+      - RESOLUTION_WIDTH=${RESOLUTION_WIDTH:-1024}
+      - RESOLUTION_HEIGHT=${RESOLUTION_HEIGHT:-768}
+      - VNC_PASSWORD=${VNC_PASSWORD:-vncpassword}
+      - CHROME_DEBUGGING_PORT=9222
+      - CHROME_DEBUGGING_HOST=localhost
+      - API_PORT=${API_PORT:-8000}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    restart: unless-stopped
+    shm_size: '2gb'
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp=unconfined
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["/health_check.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
