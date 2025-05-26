@@ -6,8 +6,8 @@ import asyncio
 import traceback
 
 from fastapi import Body
-from ..models.action_models import DragDropAction
-from ..core.dom_handler import DOMHandler
+from browser_api.models.action_models import DragDropAction
+from browser_api.core.dom_handler import DOMHandler
 
 class DragDropActions:
     """Drag and drop browser actions"""
@@ -18,9 +18,13 @@ class DragDropActions:
         try:
             context = await browser_instance.get_current_context()
             
+            # Get source and target, supporting both field name variants
+            source_selector = action.source_selector or action.element_source
+            target_selector = action.target_selector or action.element_target
+            
             # We need either element selectors or coordinates
-            if (not action.element_source and (action.coord_source_x is None or action.coord_source_y is None)) or \
-               (not action.element_target and (action.coord_target_x is None or action.coord_target_y is None)):
+            if (not source_selector and (action.coord_source_x is None or action.coord_source_y is None)) or \
+               (not target_selector and (action.coord_target_x is None or action.coord_target_y is None)):
                 return browser_instance.build_action_result(
                     False,
                     "Missing source or target for drag and drop",
@@ -32,17 +36,17 @@ class DragDropActions:
                 )
             
             # Get the DOM state for element lookup
-            if action.element_source or action.element_target:
+            if source_selector or target_selector:
                 dom_state = await DOMHandler.get_dom_state(context)
             
             # Determine source coordinates
             source_x = None
             source_y = None
             
-            if action.element_source:
+            if source_selector:
                 # Find the element in the selector map
                 try:
-                    source_index = int(action.element_source)
+                    source_index = int(source_selector)
                     if source_index not in dom_state.selector_map:
                         return browser_instance.build_action_result(
                             False,
@@ -78,16 +82,16 @@ class DragDropActions:
                 except ValueError:
                     # Not a numeric index, try as a selector
                     try:
-                        element = await context.query_selector(action.element_source)
+                        element = await context.query_selector(source_selector)
                         if not element:
                             return browser_instance.build_action_result(
                                 False,
-                                f"Source element with selector '{action.element_source}' not found",
+                                f"Source element with selector '{source_selector}' not found",
                                 dom_state,
                                 "",
                                 "",
                                 {},
-                                error=f"Source element with selector '{action.element_source}' not found"
+                                error=f"Source element with selector '{source_selector}' not found"
                             )
                         
                         # Get element's bounding box
@@ -95,12 +99,12 @@ class DragDropActions:
                         if not bounding_box:
                             return browser_instance.build_action_result(
                                 False,
-                                f"Could not determine bounding box for source element '{action.element_source}'",
+                                f"Could not determine bounding box for source element '{source_selector}'",
                                 dom_state,
                                 "",
                                 "",
                                 {},
-                                error=f"No bounding box available for source element '{action.element_source}'"
+                                error=f"No bounding box available for source element '{source_selector}'"
                             )
                         
                         # Use the element's center coordinates
@@ -114,7 +118,7 @@ class DragDropActions:
                     except Exception as selector_error:
                         return browser_instance.build_action_result(
                             False,
-                            f"Error finding source element with selector '{action.element_source}'",
+                            f"Error finding source element with selector '{source_selector}'",
                             dom_state,
                             "",
                             "",
@@ -130,10 +134,10 @@ class DragDropActions:
             target_x = None
             target_y = None
             
-            if action.element_target:
+            if target_selector:
                 # Find the element in the selector map
                 try:
-                    target_index = int(action.element_target)
+                    target_index = int(target_selector)
                     if target_index not in dom_state.selector_map:
                         return browser_instance.build_action_result(
                             False,
@@ -169,16 +173,16 @@ class DragDropActions:
                 except ValueError:
                     # Not a numeric index, try as a selector
                     try:
-                        element = await context.query_selector(action.element_target)
+                        element = await context.query_selector(target_selector)
                         if not element:
                             return browser_instance.build_action_result(
                                 False,
-                                f"Target element with selector '{action.element_target}' not found",
+                                f"Target element with selector '{target_selector}' not found",
                                 dom_state,
                                 "",
                                 "",
                                 {},
-                                error=f"Target element with selector '{action.element_target}' not found"
+                                error=f"Target element with selector '{target_selector}' not found"
                             )
                         
                         # Get element's bounding box
@@ -186,12 +190,12 @@ class DragDropActions:
                         if not bounding_box:
                             return browser_instance.build_action_result(
                                 False,
-                                f"Could not determine bounding box for target element '{action.element_target}'",
+                                f"Could not determine bounding box for target element '{target_selector}'",
                                 dom_state,
                                 "",
                                 "",
                                 {},
-                                error=f"No bounding box available for target element '{action.element_target}'"
+                                error=f"No bounding box available for target element '{target_selector}'"
                             )
                         
                         # Use the element's center coordinates
@@ -205,7 +209,7 @@ class DragDropActions:
                     except Exception as selector_error:
                         return browser_instance.build_action_result(
                             False,
-                            f"Error finding target element with selector '{action.element_target}'",
+                            f"Error finding target element with selector '{target_selector}'",
                             dom_state,
                             "",
                             "",
@@ -222,11 +226,14 @@ class DragDropActions:
                 steps = action.steps if action.steps is not None else 10
                 delay_ms = action.delay_ms if action.delay_ms is not None else 5
                 
+                # Always use page for mouse operations (frames don't have mouse attribute)
+                page = await browser_instance.get_current_page()
+                
                 # Move to start position
-                await context.mouse.move(source_x, source_y)
+                await page.mouse.move(source_x, source_y)
                 
                 # Press and hold
-                await context.mouse.down()
+                await page.mouse.down()
                 
                 # Move to target position in steps
                 x_step = (target_x - source_x) / steps
@@ -235,14 +242,14 @@ class DragDropActions:
                 for i in range(1, steps + 1):
                     current_x = source_x + (x_step * i)
                     current_y = source_y + (y_step * i)
-                    await context.mouse.move(current_x, current_y)
+                    await page.mouse.move(current_x, current_y)
                     
                     # Small delay between steps for smoother drag
                     if delay_ms > 0:
                         await asyncio.sleep(delay_ms / 1000)
                 
                 # Release at target position
-                await context.mouse.up()
+                await page.mouse.up()
                 
                 success = True
                 message = "Drag and drop operation completed"

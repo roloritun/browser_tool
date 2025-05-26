@@ -3,11 +3,10 @@ Navigation-related actions for browser automation.
 This module provides functionality for navigating in the browser.
 """
 import traceback
-from typing import Dict, Any
 
 from fastapi import Body
-from ..models.action_models import GoToUrlAction, SearchGoogleAction, NoParamsAction
-from ..core.dom_handler import DOMHandler
+from browser_api.models.action_models import GoToUrlAction, SearchGoogleAction, NoParamsAction
+from browser_api.core.dom_handler import DOMHandler
 
 class NavigationActions:
     """Navigation-related browser actions"""
@@ -50,7 +49,7 @@ class NavigationActions:
                 # Try to recover by waiting a bit
                 try:
                     await page.wait_for_timeout(2000)
-                except:
+                except Exception:
                     pass
             
             # Get updated state after action
@@ -221,6 +220,92 @@ class NavigationActions:
             )
         except Exception as e:
             print(f"Unexpected error in wait: {e}")
+            traceback.print_exc()
+            return browser_instance.build_action_result(
+                False,
+                str(e),
+                None,
+                "",
+                "",
+                {},
+                error=str(e)
+            )
+    
+    @staticmethod
+    async def go_forward(browser_instance, action: NoParamsAction = Body(...)):
+        """Go forward in browser history"""
+        try:
+            page = await browser_instance.get_current_page()
+            
+            try:
+                await page.go_forward()
+                print("Successfully went forward in browser history")
+                success = True
+                message = "Navigated forward to next page"
+                error = ""
+            except Exception as forward_error:
+                print(f"Error going forward: {forward_error}")
+                success = False
+                message = "Failed to go forward"
+                error = str(forward_error)
+            
+            # Get updated state after action
+            dom_state, screenshot, elements, metadata = await DOMHandler.get_updated_browser_state(page, "go_forward")
+            
+            return browser_instance.build_action_result(
+                success,
+                message,
+                dom_state,
+                screenshot,
+                elements,
+                metadata,
+                error=error
+            )
+        except Exception as e:
+            print(f"Unexpected error in go_forward: {e}")
+            traceback.print_exc()
+            return browser_instance.build_action_result(
+                False,
+                str(e),
+                None,
+                "",
+                "",
+                {},
+                error=str(e)
+            )
+
+    @staticmethod
+    async def refresh(browser_instance, action: NoParamsAction = Body(...)):
+        """Refresh the current page"""
+        try:
+            page = await browser_instance.get_current_page()
+            
+            try:
+                await page.reload(wait_until="domcontentloaded", timeout=30000)
+                print("Successfully refreshed the page")
+                success = True
+                message = "Page refreshed successfully"
+                error = ""
+            except Exception as refresh_error:
+                print(f"Error refreshing page: {refresh_error}")
+                success = False
+                message = "Failed to refresh page"
+                error = str(refresh_error)
+            
+            # Get updated state after action
+            dom_state, screenshot, elements, metadata = await DOMHandler.get_updated_browser_state(page, "refresh")
+            
+            return browser_instance.build_action_result(
+                success,
+                message,
+                dom_state,
+                screenshot,
+                elements,
+                metadata,
+                error=error
+            )
+        except Exception as e:
+            print(f"Unexpected error in refresh: {e}")
             traceback.print_exc()
             return browser_instance.build_action_result(
                 False,

@@ -3,25 +3,23 @@ Network condition actions for browser automation.
 This module provides functionality for modifying network conditions.
 """
 import traceback
-from typing import Dict, Any
 
-from fastapi import Body
-from ..core.dom_handler import DOMHandler
+from browser_api.core.dom_handler import DOMHandler
 
 class NetworkActions:
     """Network condition browser actions"""
     
     @staticmethod
-    async def set_network_conditions(browser_instance, conditions: Dict[str, Any] = Body(...)):
+    async def set_network_conditions(browser_instance, conditions):
         """Set network conditions like offline mode, throttling, etc."""
         try:
             page = await browser_instance.get_current_page()
             
-            # Extract network condition parameters
-            offline = conditions.get("offline", False)
-            latency = conditions.get("latency", 0)  # Additional latency in ms
-            download_throughput = conditions.get("downloadThroughput", -1)  # Bytes per second, -1 means no limit
-            upload_throughput = conditions.get("uploadThroughput", -1)  # Bytes per second, -1 means no limit
+            # Extract network condition parameters from Pydantic model
+            offline = conditions.offline
+            latency = conditions.latency  # Additional latency in ms
+            download_throughput = conditions.downloadThroughput  # Bytes per second, -1 means no limit
+            upload_throughput = conditions.uploadThroughput  # Bytes per second, -1 means no limit
             
             try:
                 # Apply network conditions

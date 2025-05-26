@@ -31,19 +31,19 @@ log "- VNC_PORT: $VNC_PORT"
 log "- NOVNC_PORT: $NOVNC_PORT"
 log "- HTTP_PORT: $HTTP_PORT"
 
-# Create required directories
+# Create required directories with proper permissions for root user
 log "Setting up required directories..."
 mkdir -p /var/log/supervisor /var/run/supervisor /var/log/vnc /tmp/.X11-unix
-chmod -R 777 /var/log/supervisor /var/run/supervisor /var/log/vnc
-chmod 1777 /tmp/.X11-unix
+chmod 755 /var/log/supervisor /var/run/supervisor /var/log/vnc 2>/dev/null || true
+chmod 1777 /tmp/.X11-unix 2>/dev/null || true
 
 # Check if noVNC proxy is executable and fix if needed
 log "Verifying noVNC configuration..."
 # Fix permissions on websockify files
 if [ -d /opt/novnc/utils/websockify ]; then
-    find /opt/novnc/utils/websockify -name "*.py" -exec chmod +x {} \;
+    find /opt/novnc/utils/websockify -name "*.py" -exec chmod +x {} \; 2>/dev/null || true
     if [ -f /opt/novnc/utils/websockify/run ]; then
-        chmod +x /opt/novnc/utils/websockify/run
+        chmod +x /opt/novnc/utils/websockify/run 2>/dev/null || true
         log "Fixed permissions on websockify/run script"
     fi
     log "Fixed permissions on websockify Python files"
@@ -57,20 +57,20 @@ log "Initializing workspace..."
 
 # Set up passwordless VNC
 log "Configuring passwordless VNC access..."
-mkdir -p ~/.vnc
+mkdir -p /root/.vnc
 # Empty password file for passwordless access
-touch ~/.vnc/passwd
-chmod 600 ~/.vnc/passwd
+touch /root/.vnc/passwd
+chmod 600 /root/.vnc/passwd
 
 # Create VNC config with security settings for passwordless access
-cat > ~/.vnc/config << EOF
+cat > /root/.vnc/config << EOF
 SecurityTypes=None
 DotWhenNoCursor=1
 EOF
 
 # Set up X11 environment
-touch ~/.Xauthority
-xauth generate $DISPLAY . trusted
+touch /root/.Xauthority
+xauth -f /root/.Xauthority generate $DISPLAY . trusted 2>/dev/null || true
 
 # Check ports availability
 check_port() {

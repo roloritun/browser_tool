@@ -7,8 +7,8 @@ import traceback
 from typing import Dict, Any, List, Optional
 
 from fastapi import Body
-from ..models.action_models import NoParamsAction
-from ..core.dom_handler import DOMHandler
+from browser_api.models.action_models import NoParamsAction
+from browser_api.core.dom_handler import DOMHandler
 
 class CookieStorageActions:
     """Cookie and storage management browser actions"""
@@ -60,19 +60,19 @@ class CookieStorageActions:
             return []
             
     @staticmethod
-    async def set_cookie(browser_instance, cookie_data: Dict[str, Any] = Body(...)):
+    async def set_cookie(browser_instance, cookie_data):
         """Set a cookie for the current page"""
         try:
             result = await CookieStorageActions._set_cookie(
                 browser_instance,
-                name=cookie_data.get("name"),
-                value=cookie_data.get("value"),
-                domain=cookie_data.get("domain"),
-                path=cookie_data.get("path", "/"),
-                expires=cookie_data.get("expires"),
-                http_only=cookie_data.get("httpOnly", False),
-                secure=cookie_data.get("secure", False),
-                same_site=cookie_data.get("sameSite")
+                name=cookie_data.name,
+                value=cookie_data.value,
+                domain=cookie_data.domain,
+                path=cookie_data.path,
+                expires=cookie_data.expires,
+                http_only=cookie_data.httpOnly,
+                secure=cookie_data.secure,
+                same_site=cookie_data.sameSite
             )
             
             # Get updated state after action

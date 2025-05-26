@@ -2,152 +2,237 @@
 Main entry point for the browser API.
 This module integrates all the functionality into a single FastAPI application.
 """
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
-from .core.browser_automation import BrowserAutomation
-from .actions.navigation import NavigationActions
-from .actions.interaction import InteractionActions
-from .actions.tab_management import TabManagementActions
-from .actions.content import ContentActions
-from .actions.scroll import ScrollActions
-from .actions.cookies import CookieStorageActions
-from .actions.dialog import DialogActions
-from .actions.frame import FrameActions
-from .actions.network import NetworkActions
-from .actions.drag_drop import DragDropActions
+from browser_api.core.browser_automation import BrowserAutomation
+from browser_api.actions.navigation import NavigationActions
+from browser_api.actions.interaction import InteractionActions
+from browser_api.actions.tab_management import TabManagementActions
+from browser_api.actions.content import ContentActions
+from browser_api.actions.scroll import ScrollActions
+from browser_api.actions.cookies import CookieStorageActions
+from browser_api.actions.dialog import DialogActions
+from browser_api.actions.frame import FrameActions
+from browser_api.actions.network import NetworkActions
+from browser_api.actions.drag_drop import DragDropActions
+from browser_api.models.action_models import (
+    GoToUrlAction,
+    SearchGoogleAction,
+    ClickElementAction,
+    ClickCoordinatesAction,
+    InputTextAction,
+    SendKeysAction,
+    SwitchTabAction,
+    OpenTabAction,
+    CloseTabAction,
+    ScrollAction,
+    NoParamsAction,
+    DragDropAction,
+    SwitchToFrameAction,
+    SetNetworkConditionsAction,
+    ScrollToTextAction,
+    SetCookieAction,
+    WaitAction,
+    ExtractContentAction,
+    PDFOptionsAction,
+    GetDropdownOptionsAction,
+    SelectDropdownOptionAction
+)
+
+# Global browser automation instance
+browser_automation = BrowserAutomation()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan"""
+    # Startup
+    await browser_automation.startup()
+    yield
+    # Shutdown
+    await browser_automation.shutdown()
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application"""
-    app = FastAPI(title="Browser Automation API")
+    app = FastAPI(
+        title="Browser Automation API",
+        lifespan=lifespan
+    )
     
     # Add health check endpoint for Daytona monitoring
     @app.get("/health")
     async def health_check():
         """Health check endpoint for monitoring and deployment"""
         return {
+            "success": True,
+            "message": "Browser automation API is healthy",
             "status": "healthy",
             "service": "browser_automation_api",
             "version": "2.0.0-modular"
         }
     
-    # Create the browser automation instance
-    browser_automation = BrowserAutomation()
-    
-    # Register the router with the app
-    app.include_router(browser_automation.router, tags=["browser"])
-    
-    # Register startup and shutdown handlers
-    app.on_event("startup")(browser_automation.startup)
-    app.on_event("shutdown")(browser_automation.shutdown)
-    
     # Register routes for navigation
-    browser_automation.router.post("/automation/navigate_to")(
-        lambda action: NavigationActions.navigate_to(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/search_google")(
-        lambda action: NavigationActions.search_google(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/go_back")(
-        lambda action: NavigationActions.go_back(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/wait")(
-        lambda action: NavigationActions.wait(browser_automation, action)
-    )
+    @app.post("/automation/navigate_to", tags=["browser"])
+    async def navigate_to(action: GoToUrlAction):
+        return await NavigationActions.navigate_to(browser_automation, action)
+    
+    @app.post("/automation/search_google", tags=["browser"])
+    async def search_google(action: SearchGoogleAction):
+        return await NavigationActions.search_google(browser_automation, action)
+    
+    @app.post("/automation/go_back", tags=["browser"])
+    async def go_back(action: NoParamsAction):
+        return await NavigationActions.go_back(browser_automation, action)
+    
+    @app.post("/automation/go_forward", tags=["browser"])
+    async def go_forward(action: NoParamsAction):
+        return await NavigationActions.go_forward(browser_automation, action)
+    
+    @app.post("/automation/refresh", tags=["browser"])
+    async def refresh(action: NoParamsAction):
+        return await NavigationActions.refresh(browser_automation, action)
+    
+    @app.post("/automation/wait", tags=["browser"])
+    async def wait_action(action: WaitAction):
+        return await NavigationActions.wait(browser_automation, action)
     
     # Register routes for element interaction
-    browser_automation.router.post("/automation/click_element")(
-        lambda action: InteractionActions.click_element(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/click_coordinates")(
-        lambda action: InteractionActions.click_coordinates(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/input_text")(
-        lambda action: InteractionActions.input_text(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/send_keys")(
-        lambda action: InteractionActions.send_keys(browser_automation, action)
-    )
+    @app.post("/automation/click_element", tags=["browser"])
+    async def click_element(action: ClickElementAction):
+        return await InteractionActions.click_element(browser_automation, action)
+    
+    @app.post("/automation/click_coordinates", tags=["browser"])
+    async def click_coordinates(action: ClickCoordinatesAction):
+        return await InteractionActions.click_coordinates(browser_automation, action)
+    
+    @app.post("/automation/input_text", tags=["browser"])
+    async def input_text(action: InputTextAction):
+        return await InteractionActions.input_text(browser_automation, action)
+    
+    @app.post("/automation/send_keys", tags=["browser"])
+    async def send_keys(action: SendKeysAction):
+        return await InteractionActions.send_keys(browser_automation, action)
     
     # Register routes for tab management
-    browser_automation.router.post("/automation/switch_tab")(
-        lambda action: TabManagementActions.switch_tab(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/open_tab")(
-        lambda action: TabManagementActions.open_tab(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/close_tab")(
-        lambda action: TabManagementActions.close_tab(browser_automation, action)
-    )
+    @app.post("/automation/switch_tab", tags=["browser"])
+    async def switch_tab(action: SwitchTabAction):
+        return await TabManagementActions.switch_tab(browser_automation, action)
+    
+    @app.post("/automation/open_tab", tags=["browser"])
+    async def open_tab(action: OpenTabAction):
+        return await TabManagementActions.open_tab(browser_automation, action)
+    
+    @app.post("/automation/open_new_tab", tags=["browser"])
+    async def open_new_tab(action: OpenTabAction):
+        return await TabManagementActions.open_tab(browser_automation, action)
+    
+    @app.post("/automation/close_tab", tags=["browser"])
+    async def close_tab(action: CloseTabAction):
+        return await TabManagementActions.close_tab(browser_automation, action)
     
     # Register routes for content actions
-    browser_automation.router.post("/automation/extract_content")(
-        lambda action: ContentActions.extract_content(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/save_pdf")(
-        lambda action: ContentActions.save_pdf(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/generate_pdf")(
-        lambda action: ContentActions.generate_pdf(browser_automation, action)
-    )
+    @app.post("/automation/extract_content", tags=["browser"])
+    async def extract_content(action: ExtractContentAction):
+        return await ContentActions.extract_content(browser_automation, action)
+    
+    @app.post("/automation/save_pdf", tags=["browser"])
+    async def save_pdf(action: PDFOptionsAction):
+        return await ContentActions.save_pdf(browser_automation, action)
+    
+    @app.post("/automation/generate_pdf", tags=["browser"])
+    async def generate_pdf(action: PDFOptionsAction):
+        return await ContentActions.generate_pdf(browser_automation, action)
+    
+    @app.post("/automation/get_page_content", tags=["browser"])
+    async def get_page_content(action: ExtractContentAction):
+        return await ContentActions.extract_content(browser_automation, action)
+    
+    @app.post("/automation/take_screenshot", tags=["browser"])
+    async def take_screenshot(action: NoParamsAction):
+        return await ContentActions.take_screenshot(browser_automation, action)
+    
+    @app.post("/automation/get_page_pdf", tags=["browser"])
+    async def get_page_pdf(action: PDFOptionsAction):
+        return await ContentActions.generate_pdf(browser_automation, action)
     
     # Register routes for scroll actions
-    browser_automation.router.post("/automation/scroll_down")(
-        lambda action: ScrollActions.scroll_down(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/scroll_up")(
-        lambda action: ScrollActions.scroll_up(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/scroll_to_text")(
-        lambda action: ScrollActions.scroll_to_text(browser_automation, action)
-    )
+    @app.post("/automation/scroll_down", tags=["browser"])
+    async def scroll_down(action: ScrollAction):
+        return await ScrollActions.scroll_down(browser_automation, action)
+    
+    @app.post("/automation/scroll_up", tags=["browser"])
+    async def scroll_up(action: ScrollAction):
+        return await ScrollActions.scroll_up(browser_automation, action)
+    
+    @app.post("/automation/scroll_to_text", tags=["browser"])
+    async def scroll_to_text(action: ScrollToTextAction):
+        return await ScrollActions.scroll_to_text(browser_automation, action)
+    
+    @app.post("/automation/scroll_to_top", tags=["browser"])
+    async def scroll_to_top(action: NoParamsAction):
+        return await ScrollActions.scroll_to_top(browser_automation, action)
+    
+    @app.post("/automation/scroll_to_bottom", tags=["browser"])
+    async def scroll_to_bottom(action: NoParamsAction):
+        return await ScrollActions.scroll_to_bottom(browser_automation, action)
     
     # Register routes for cookie and storage management
-    browser_automation.router.post("/automation/get_cookies")(
-        lambda action: CookieStorageActions.get_cookies(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/set_cookie")(
-        lambda action: CookieStorageActions.set_cookie(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/clear_cookies")(
-        lambda action: CookieStorageActions.clear_cookies(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/clear_local_storage")(
-        lambda action: CookieStorageActions.clear_local_storage(browser_automation, action)
-    )
+    @app.post("/automation/get_cookies", tags=["browser"])
+    async def get_cookies(action: NoParamsAction):
+        return await CookieStorageActions.get_cookies(browser_automation, action)
+    
+    @app.post("/automation/set_cookie", tags=["browser"])
+    async def set_cookie(action: SetCookieAction):
+        return await CookieStorageActions.set_cookie(browser_automation, action)
+    
+    @app.post("/automation/clear_cookies", tags=["browser"])
+    async def clear_cookies(action: NoParamsAction):
+        return await CookieStorageActions.clear_cookies(browser_automation, action)
+    
+    @app.post("/automation/clear_local_storage", tags=["browser"])
+    async def clear_local_storage(action: NoParamsAction):
+        return await CookieStorageActions.clear_local_storage(browser_automation, action)
     
     # Register routes for dialog handling
-    browser_automation.router.post("/automation/accept_dialog")(
-        lambda action: DialogActions.accept_dialog(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/dismiss_dialog")(
-        lambda action: DialogActions.dismiss_dialog(browser_automation, action)
-    )
+    @app.post("/automation/accept_dialog", tags=["browser"])
+    async def accept_dialog(action: NoParamsAction):
+        return await DialogActions.accept_dialog(browser_automation, action)
+    
+    @app.post("/automation/dismiss_dialog", tags=["browser"])
+    async def dismiss_dialog(action: NoParamsAction):
+        return await DialogActions.dismiss_dialog(browser_automation, action)
     
     # Register routes for frame handling
-    browser_automation.router.post("/automation/switch_to_frame")(
-        lambda action: FrameActions.switch_to_frame(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/switch_to_main_frame")(
-        lambda action: FrameActions.switch_to_main_frame(browser_automation, action)
-    )
+    @app.post("/automation/switch_to_frame", tags=["browser"])
+    async def switch_to_frame(action: SwitchToFrameAction):
+        return await FrameActions.switch_to_frame(browser_automation, action)
+    
+    @app.post("/automation/switch_to_main_frame", tags=["browser"])
+    async def switch_to_main_frame(action: NoParamsAction):
+        return await FrameActions.switch_to_main_frame(browser_automation, action)
     
     # Register routes for network conditions
-    browser_automation.router.post("/automation/set_network_conditions")(
-        lambda action: NetworkActions.set_network_conditions(browser_automation, action)
-    )
+    @app.post("/automation/set_network_conditions", tags=["browser"])
+    async def set_network_conditions(action: SetNetworkConditionsAction):
+        return await NetworkActions.set_network_conditions(browser_automation, action)
     
     # Register routes for drag and drop
-    browser_automation.router.post("/automation/drag_drop")(
-        lambda action: DragDropActions.drag_drop(browser_automation, action)
-    )
+    @app.post("/automation/drag_drop", tags=["browser"])
+    async def drag_drop(action: DragDropAction):
+        return await DragDropActions.drag_drop(browser_automation, action)
+    
+    @app.post("/automation/drag_and_drop", tags=["browser"])
+    async def drag_and_drop(action: DragDropAction):
+        return await DragDropActions.drag_drop(browser_automation, action)
     
     # Additional placeholder routes for future implementation
-    browser_automation.router.post("/automation/get_dropdown_options")(
-        lambda action: ContentActions.extract_content(browser_automation, action)
-    )
-    browser_automation.router.post("/automation/select_dropdown_option")(
-        lambda action: InteractionActions.click_element(browser_automation, action)
-    )
+    @app.post("/automation/get_dropdown_options", tags=["browser"])
+    async def get_dropdown_options(action: GetDropdownOptionsAction):
+        return await ContentActions.extract_content(browser_automation, action)
+    
+    @app.post("/automation/select_dropdown_option", tags=["browser"])
+    async def select_dropdown_option(action: SelectDropdownOptionAction):
+        return await InteractionActions.click_element(browser_automation, action)
     
     return app
 
@@ -169,7 +254,7 @@ async def cleanup_automation():
 if __name__ == '__main__':
     import uvicorn
     import sys
-    from .tests.test_browser_automation import test_browser_api, test_browser_api_2
+    from browser_api.tests.test_browser_automation import test_browser_api, test_browser_api_2
     import asyncio
     
     # Check command line arguments for test mode

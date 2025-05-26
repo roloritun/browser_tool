@@ -1,22 +1,31 @@
-FROM python:3.11-slim-bullseye
+# Use multi-platform Python slim image for better compatibility
+# Note: The --platform flag ensures consistent builds across different architectures
+FROM --platform=linux/amd64 python:3.11-slim
 
-# Add this after the FROM line to suppress debconf warnings
-ENV DEBIAN_FRONTEND=noninteractive
-ENV DEBCONF_NONINTERACTIVE_SEEN=true
+# Security: Suppress debconf warnings and set locale
+ENV DEBIAN_FRONTEND=noninteractive \
+    DEBCONF_NONINTERACTIVE_SEEN=true \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
 
-# Ensure all system packages are up to date to reduce vulnerabilities
-RUN apt-get update && apt-get upgrade -y && apt-get clean
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install all system dependencies in single layer for better security and performance
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+    # Core utilities
     apt-utils \
+    locales \
     wget \
     netcat-traditional \
     gnupg \
     curl \
     unzip \
     zip \
+    git \
+    # X11 and VNC dependencies
     xvfb \
+    x11vnc \
+    xauth \
+    dbus \
+    # Browser dependencies
     libgconf-2-4 \
     libxss1 \
     libnss3 \
@@ -27,7 +36,7 @@ RUN apt-get update && apt-get install -y \
     libcups2 \
     libdbus-1-3 \
     libdrm2 \
-    libgbm1 \ 
+    libgbm1 \
     libgtk-3-0 \
     libxcomposite1 \
     libxdamage1 \
@@ -35,16 +44,12 @@ RUN apt-get update && apt-get install -y \
     libxrandr2 \
     xdg-utils \
     fonts-liberation \
-    dbus \
-    xauth \
-    xvfb \
-    x11vnc \
+    # System tools
     supervisor \
     net-tools \
     procps \
-    git \
     python3-numpy \
-    fontconfig \  
+    fontconfig \
     fonts-dejavu \
     fonts-dejavu-core \
     fonts-dejavu-extra \
@@ -75,93 +80,77 @@ RUN apt-get update && apt-get install -y \
     iputils-ping \
     dnsutils \
     sudo \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Node.js and npm
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    # Clean up in same layer to reduce image size
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
-    && npm install -g npm@latest
-
-# Install Cloudflare Wrangler CLI globally
-RUN npm install -g wrangler
+    && npm install -g npm@latest \
+    && npm install -g wrangler \
+    && apt-get autoremove -y \
+    && apt-get autoclean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && rm -rf /var/tmp/*
 
 # Install noVNC
 RUN git clone https://github.com/novnc/noVNC.git /opt/novnc \
     && git clone https://github.com/novnc/websockify /opt/novnc/utils/websockify \
-    && ln -s /opt/novnc/vnc.html /opt/novnc/index.html
-# Fix permissions on noVNC files
-RUN chmod +x /opt/novnc/utils/launch.sh || true \
+    && ln -s /opt/novnc/vnc.html /opt/novnc/index.html \
+    && chmod +x /opt/novnc/utils/launch.sh 2>/dev/null || true \
     && find /opt/novnc/utils/websockify -name "*.py" -exec chmod +x {} \; \
-    && chmod +x /opt/novnc/utils/websockify/run || true
-
-# Set platform for ARM64 compatibility
-ARG TARGETPLATFORM=linux/amd64
+    && chmod +x /opt/novnc/utils/websockify/run 2>/dev/null || true
 
 # Set up working directory
 WORKDIR /app
+
+# Upgrade pip first
+RUN pip install --upgrade pip
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy server script and modular browser_api
+# Copy all application files
 COPY . /app
-COPY server.py /app/server.py
-# Copy the modular browser_api package
-COPY browser_api/ /app/browser_api/
-# Copy backward compatibility files
-COPY browser_api.py /app/browser_api.py
-COPY browser_api_adapter.py /app/browser_api_adapter.py
 
-# Create workspace directory and copy assets
-RUN mkdir -p /app/workspace
-COPY workspace/ /app/workspace/
-COPY workspace_init.sh /app/workspace_init.sh
-RUN chmod +x /app/workspace_init.sh
+# Set up permissions for scripts
+RUN chmod +x /app/workspace_init.sh 2>/dev/null || true
 
 # Install Playwright and browsers with system dependencies
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-# Install Playwright package first
-RUN pip install playwright
-# Then install dependencies and browsers
-RUN playwright install-deps
-RUN playwright install chromium
-# Verify installation
-RUN python -c "from playwright.sync_api import sync_playwright; print('Playwright installation verified')"
+RUN pip install playwright \
+    && playwright install-deps \
+    && playwright install chromium \
+    && python -c "from playwright.sync_api import sync_playwright; print('Playwright installation verified')"
 
-# Create non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV CHROME_PATH=/ms-playwright/chromium-*/chrome-linux/chrome
-ENV ANONYMIZED_TELEMETRY=false
-ENV DISPLAY=:99
-ENV RESOLUTION=1920x1080x24
-ENV CHROME_PERSISTENT_SESSION=true
-ENV RESOLUTION_WIDTH=1920
-ENV RESOLUTION_HEIGHT=1080
-ENV VNC_PORT=5901
-ENV NOVNC_PORT=6080
-ENV HTTP_PORT=8080
-ENV API_PORT=8000
-
-# Set up supervisor configuration with proper ownership
-RUN mkdir -p /var/log/supervisor /var/log/vnc && \
-    chown -R appuser:appuser /var/log/supervisor /var/log/vnc
-
-# Copy files with explicit permissions and ownership
+# Set up supervisor configuration and scripts
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY startup.sh /startup.sh
 COPY health_check.sh /health_check.sh
-RUN chmod 755 /etc/supervisor/conf.d/supervisord.conf && \
-    chmod 755 /startup.sh && \
-    chmod 755 /health_check.sh && \
-    chown appuser:appuser /etc/supervisor/conf.d/supervisord.conf /startup.sh /health_check.sh
+RUN chmod 755 /etc/supervisor/conf.d/supervisord.conf \
+    && chmod 755 /startup.sh \
+    && chmod 755 /health_check.sh
 
-# Switch to non-root user
-USER appuser
+# Create directories and set up logging (running as root)
+RUN mkdir -p /var/log/supervisor /var/log/vnc /app/data/chrome_data /workspace /root/.vnc /var/run/supervisor \
+    && chmod 755 /var/log/supervisor /var/log/vnc /var/run/supervisor \
+    && mkdir -p /tmp/.X11-unix && chmod 777 /tmp/.X11-unix
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    CHROME_PATH=/ms-playwright/chromium-*/chrome-linux/chrome \
+    ANONYMIZED_TELEMETRY=false \
+    DISPLAY=:99 \
+    RESOLUTION=1920x1080x24 \
+    CHROME_PERSISTENT_SESSION=true \
+    RESOLUTION_WIDTH=1920 \
+    RESOLUTION_HEIGHT=1080 \
+    VNC_PORT=5901 \
+    NOVNC_PORT=6080 \
+    HTTP_PORT=8080 \
+    API_PORT=8000
 
 # Expose all required ports
 EXPOSE 7788 6080 5901 8000 8080
+
+# Run as root (no USER directive)
 ENTRYPOINT ["/startup.sh"]

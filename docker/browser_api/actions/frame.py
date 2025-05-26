@@ -3,21 +3,20 @@ Frame handling actions for browser automation.
 This module provides functionality for interacting with frames in the browser.
 """
 import traceback
-from typing import Dict, Any
 
 from fastapi import Body
-from ..models.action_models import NoParamsAction
-from ..core.dom_handler import DOMHandler
+from browser_api.models.action_models import NoParamsAction, SwitchToFrameAction
+from browser_api.core.dom_handler import DOMHandler
 
 class FrameActions:
     """Frame handling browser actions"""
     
     @staticmethod
-    async def switch_to_frame(browser_instance, action: Dict[str, Any] = Body(...)):
+    async def switch_to_frame(browser_instance, action: SwitchToFrameAction = Body(...)):
         """Switch to a frame by name, ID, or index"""
         try:
             # Get the frame identifier
-            frame_selector = action.get("frame")
+            frame_selector = action.frame_selector
             if not frame_selector:
                 return browser_instance.build_action_result(
                     False,
@@ -26,20 +25,22 @@ class FrameActions:
                     "",
                     "",
                     {},
-                    error="The 'frame' parameter is required"
+                    error="The 'frame_selector' parameter is required"
                 )
             
             page = await browser_instance.get_current_page()
             
             try:
                 # Try to find the frame by name, ID, or index
-                if isinstance(frame_selector, int):
+                # First check if it's a numeric string (index)
+                try:
+                    frame_index = int(frame_selector)
                     # Find by index
                     frames = page.frames
-                    if frame_selector < 0 or frame_selector >= len(frames):
+                    if frame_index < 0 or frame_index >= len(frames):
                         return browser_instance.build_action_result(
                             False,
-                            f"Invalid frame index: {frame_selector}",
+                            f"Invalid frame index: {frame_index}. Found {len(frames)} frames.",
                             None,
                             "",
                             "",
@@ -47,15 +48,16 @@ class FrameActions:
                             error=f"Frame index must be between 0 and {len(frames) - 1}"
                         )
                     
-                    browser_instance.current_frame = frames[frame_selector]
-                else:
+                    browser_instance.current_frame = frames[frame_index]
+                except ValueError:
+                    # Not a number, treat as name/ID selector
                     # Find by name or ID (as a CSS selector)
                     # First try using the built-in frame method
                     frame = page.frame(name=frame_selector)
                     
                     if not frame:
                         # Try finding the iframe element and then get its content frame
-                        iframe_element = await page.query_selector(f"iframe[name='{frame_selector}'], iframe[id='{frame_selector}']")
+                        iframe_element = await page.query_selector(f"iframe[name='{frame_selector}'], iframe[id='{frame_selector}'], iframe")
                         if not iframe_element:
                             return browser_instance.build_action_result(
                                 False,

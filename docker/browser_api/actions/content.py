@@ -7,10 +7,10 @@ import asyncio
 from typing import Dict, Any
 
 from fastapi import Body
-from ..models.action_models import NoParamsAction
-from ..core.dom_handler import DOMHandler
-from ..utils.pdf_utils import PDFUtils
-from ..utils.screenshot_utils import ScreenshotUtils
+from browser_api.models.action_models import NoParamsAction
+from browser_api.core.dom_handler import DOMHandler
+from browser_api.utils.pdf_utils import PDFUtils
+from browser_api.utils.screenshot_utils import ScreenshotUtils
 
 class ContentActions:
     """Content extraction and PDF generation browser actions"""
@@ -132,3 +132,54 @@ class ContentActions:
         """Generate a PDF of the current page and return as base64 encoded string"""
         # This is essentially the same as save_pdf, but kept for backwards compatibility
         return await ContentActions.save_pdf(browser_instance, pdf_options)
+    
+    @staticmethod
+    async def take_screenshot(browser_instance, action: NoParamsAction = Body(...)):
+        """Take a screenshot of the current page"""
+        try:
+            page = await browser_instance.get_current_page()
+            
+            try:
+                # Take a screenshot of the full page
+                screenshot_bytes = await page.screenshot(full_page=True)
+                
+                # Convert to base64 for JSON response
+                import base64
+                screenshot_base64 = base64.b64encode(screenshot_bytes).decode('utf-8')
+                
+                success = True
+                message = "Screenshot taken successfully"
+                error = ""
+            except Exception as screenshot_error:
+                print(f"Error taking screenshot: {screenshot_error}")
+                traceback.print_exc()
+                success = False
+                message = "Failed to take screenshot"
+                error = str(screenshot_error)
+                screenshot_base64 = ""
+            
+            # Get updated state after action
+            dom_state, screenshot, elements, metadata = await DOMHandler.get_updated_browser_state(page, "take_screenshot")
+            
+            return browser_instance.build_action_result(
+                success,
+                message,
+                dom_state,
+                screenshot_base64,  # Use the new screenshot we just took
+                elements,
+                metadata,
+                error=error,
+                content=screenshot_base64
+            )
+        except Exception as e:
+            print(f"Unexpected error in take_screenshot: {e}")
+            traceback.print_exc()
+            return browser_instance.build_action_result(
+                False,
+                str(e),
+                None,
+                "",
+                "",
+                {},
+                error=str(e)
+            )

@@ -19,10 +19,10 @@ from langchain.tools import BaseTool
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_openai import AzureChatOpenAI
 from pydantic import BaseModel, Field
-from utilities.sandbox_manager import SandboxManager
+from src.tools.utilities.sandbox_manager import SandboxManager
 from dotenv import load_dotenv
 
-# from logger_setup import logger
+# from src.utils.logger_setup import logger
 
 load_dotenv()
 

@@ -2,17 +2,17 @@
 Test adapter that provides backward compatibility for the tests.
 This module patches the BrowserAutomation class to support the old method calls.
 """
-from ..core.browser_automation import BrowserAutomation
-from ..actions.navigation import NavigationActions
-from ..actions.interaction import InteractionActions
-from ..actions.tab_management import TabManagementActions
-from ..actions.content import ContentActions
-from ..actions.scroll import ScrollActions
-from ..actions.cookies import CookieStorageActions
-from ..actions.dialog import DialogActions
-from ..actions.frame import FrameActions
-from ..actions.network import NetworkActions
-from ..actions.drag_drop import DragDropActions
+from browser_api.core.browser_automation import BrowserAutomation
+from browser_api.actions.navigation import NavigationActions
+from browser_api.actions.interaction import InteractionActions
+from browser_api.actions.tab_management import TabManagementActions
+from browser_api.actions.content import ContentActions
+from browser_api.actions.scroll import ScrollActions
+from browser_api.actions.cookies import CookieStorageActions
+from browser_api.actions.dialog import DialogActions
+from browser_api.actions.frame import FrameActions
+from browser_api.actions.network import NetworkActions
+from browser_api.actions.drag_drop import DragDropActions
 
 # Create a patched version of BrowserAutomation with all the old methods
 class BrowserAutomationAdapter(BrowserAutomation):
@@ -136,18 +136,18 @@ class BrowserAutomationAdapter(BrowserAutomation):
     
     async def get_current_dom_state(self):
         """Adapter for get_current_dom_state - returns the current DOM state"""
-        from ..core.dom_handler import DOMHandler
+        from browser_api.core.dom_handler import DOMHandler
         page = await self.get_current_page()
         return await DOMHandler.get_dom_state(page)
     
     async def extract_ocr_text_from_screenshot(self, screenshot_base64: str) -> str:
         """Adapter for extract_ocr_text_from_screenshot - extracts text using OCR"""
-        from ..utils.screenshot_utils import ScreenshotUtils
+        from browser_api.utils.screenshot_utils import ScreenshotUtils
         return ScreenshotUtils.extract_text_from_image(screenshot_base64)
         
     async def get_updated_browser_state(self, action_name: str) -> tuple:
         """Adapter for get_updated_browser_state - gets updated browser state after an action"""
-        from ..core.dom_handler import DOMHandler
+        from browser_api.core.dom_handler import DOMHandler
         page = await self.get_current_page()
         return await DOMHandler.get_updated_browser_state(page, action_name)
 

@@ -6,8 +6,8 @@ import traceback
 from typing import Dict, Any
 
 from fastapi import Body
-from ..models.action_models import NoParamsAction
-from ..core.dom_handler import DOMHandler
+from browser_api.models.action_models import NoParamsAction
+from browser_api.core.dom_handler import DOMHandler
 
 class DialogActions:
     """Dialog handling browser actions"""

@@ -3,31 +3,42 @@ Tab management actions for browser automation.
 This module provides functionality for managing browser tabs.
 """
 import traceback
-from typing import Dict, Any
 
-from fastapi import Body, HTTPException
-from ..models.action_models import SwitchTabAction, OpenTabAction, CloseTabAction
-from ..core.dom_handler import DOMHandler
+from fastapi import Body
+from browser_api.models.action_models import SwitchTabAction, OpenTabAction, CloseTabAction
+from browser_api.core.dom_handler import DOMHandler
 
 class TabManagementActions:
     """Tab management browser actions"""
     
     @staticmethod
     async def switch_tab(browser_instance, action: SwitchTabAction = Body(...)):
-        """Switch to a different tab by page ID"""
+        """Switch to a different tab by tab index or page ID"""
         try:
-            page_id = action.page_id
+            # Use tab_index as primary, fall back to page_id if provided
+            page_id = action.tab_index if action.tab_index is not None else action.page_id
+            
+            if page_id is None:
+                return browser_instance.build_action_result(
+                    False,
+                    "No tab index or page ID provided",
+                    None,
+                    "",
+                    "",
+                    {},
+                    error="Either tab_index or page_id must be provided"
+                )
             
             # Verify the page ID is valid
             if page_id < 0 or page_id >= len(browser_instance.pages):
                 return browser_instance.build_action_result(
                     False,
-                    f"Invalid page ID: {page_id}",
+                    f"Invalid tab index: {page_id}",
                     None,
                     "",
                     "",
                     {},
-                    error=f"Page ID must be between 0 and {len(browser_instance.pages) - 1}"
+                    error=f"Tab index must be between 0 and {len(browser_instance.pages) - 1}"
                 )
             
             # Switch to the specified page
@@ -131,20 +142,32 @@ class TabManagementActions:
     
     @staticmethod
     async def close_tab(browser_instance, action: CloseTabAction = Body(...)):
-        """Close a tab by page ID"""
+        """Close a tab by tab index or page ID"""
         try:
-            page_id = action.page_id
+            # Use tab_index as primary, fall back to page_id if provided
+            page_id = action.tab_index if action.tab_index is not None else action.page_id
+            
+            if page_id is None:
+                return browser_instance.build_action_result(
+                    False,
+                    "No tab index or page ID provided",
+                    None,
+                    "",
+                    "",
+                    {},
+                    error="Either tab_index or page_id must be provided"
+                )
             
             # Verify the page ID is valid
             if page_id < 0 or page_id >= len(browser_instance.pages):
                 return browser_instance.build_action_result(
                     False,
-                    f"Invalid page ID: {page_id}",
+                    f"Invalid tab index: {page_id}",
                     None,
                     "",
                     "",
                     {},
-                    error=f"Page ID must be between 0 and {len(browser_instance.pages) - 1}"
+                    error=f"Tab index must be between 0 and {len(browser_instance.pages) - 1}"
                 )
             
             # Make sure we're not closing the last tab

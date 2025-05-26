@@ -3,111 +3,147 @@ Element interaction actions for browser automation.
 This module provides functionality for interacting with elements on the page.
 """
 import traceback
-from typing import Dict, Any
 
 from fastapi import Body
-from ..models.action_models import ClickElementAction, ClickCoordinatesAction, InputTextAction, SendKeysAction
-from ..core.dom_handler import DOMHandler
+from browser_api.models.action_models import ClickElementAction, ClickCoordinatesAction, InputTextAction, SendKeysAction
+from browser_api.core.dom_handler import DOMHandler
 
 class InteractionActions:
     """Element interaction browser actions"""
     
     @staticmethod
     async def click_element(browser_instance, action: ClickElementAction = Body(...)):
-        """Click on an element by index"""
+        """Click on an element by selector or index"""
         try:
-            index = action.index
             context = await browser_instance.get_current_context()
             
             # Get DOM state to find the element
             dom_state = await DOMHandler.get_dom_state(context)
             
-            # Find the element in the selector map
-            if index not in dom_state.selector_map:
-                return browser_instance.build_action_result(
-                    False,
-                    f"Element with index {index} not found",
-                    dom_state,
-                    "",
-                    "",
-                    {},
-                    error=f"Element with index {index} not found"
-                )
-            
-            element = dom_state.selector_map[index]
-            
-            # If the element is an input, might need to focus first
-            is_input = element.tag_name in ["input", "textarea", "select"]
-            
-            # Try to find a good selector for this element
-            selector = None
-            
-            # Try to use ID first if available
-            if "id" in element.attributes and element.attributes["id"]:
-                selector = f"#{element.attributes['id']}"
-            
-            # Try name attribute next
-            elif "name" in element.attributes and element.attributes["name"]:
-                selector = f"[name='{element.attributes['name']}']"
-                
-            # Use element coordinates as fallback
-            coordinates = None
-            if element.page_coordinates:
-                coordinates = {
-                    "x": element.page_coordinates.x + (element.page_coordinates.width / 2),
-                    "y": element.page_coordinates.y + (element.page_coordinates.height / 2)
-                }
-            
-            try:
-                if selector:
-                    print(f"Clicking element with selector: {selector}")
-                    # Focus first for input elements
-                    if is_input:
-                        try:
-                            await context.focus(selector, timeout=5000)
-                        except Exception as focus_error:
-                            print(f"Error focusing element: {focus_error}")
+            # Check if we have a CSS selector
+            if action.selector:
+                try:
+                    # Use CSS selector to find the element
+                    element_handle = await context.query_selector(action.selector)
+                    if not element_handle:
+                        return browser_instance.build_action_result(
+                            False,
+                            f"Element with selector '{action.selector}' not found",
+                            dom_state,
+                            "",
+                            "",
+                            {},
+                            error=f"Element with selector '{action.selector}' not found"
+                        )
                     
-                    # Then click
-                    await context.click(selector, timeout=5000)
-                elif coordinates:
-                    print(f"Clicking element at coordinates: {coordinates}")
-                    await context.mouse.click(coordinates["x"], coordinates["y"])
-                else:
+                    # Click the element
+                    await element_handle.click()
+                    
+                    success = True
+                    message = f"Clicked element with selector '{action.selector}'"
+                    error = ""
+                    
+                except Exception as click_error:
+                    print(f"Error clicking element with selector '{action.selector}': {click_error}")
+                    traceback.print_exc()
+                    success = False
+                    message = f"Failed to click element with selector '{action.selector}'"
+                    error = str(click_error)
+            else:
+                # Use index-based selection (fallback)
+                index = action.index if action.index is not None else 0
+                
+                # Find the element in the selector map
+                if index not in dom_state.selector_map:
                     return browser_instance.build_action_result(
                         False,
-                        f"Could not find a way to click element with index {index}",
+                        f"Element with index {index} not found",
                         dom_state,
                         "",
                         "",
                         {},
-                        error=f"No selector or coordinates available for element {index}"
+                        error=f"Element with index {index} not found"
                     )
                 
-                success = True
-                message = f"Clicked element with index {index}"
-                error = ""
-            except Exception as click_error:
-                print(f"Error clicking element: {click_error}")
-                traceback.print_exc()
+                element = dom_state.selector_map[index]
                 
-                # Try fallback to coordinates if selector failed
-                if selector and coordinates:
-                    try:
-                        print(f"Trying fallback click at coordinates: {coordinates}")
-                        await context.mouse.click(coordinates["x"], coordinates["y"])
-                        success = True
-                        message = f"Clicked element with index {index} using coordinates fallback"
-                        error = ""
-                    except Exception as fallback_error:
-                        print(f"Error in fallback click: {fallback_error}")
+                # If the element is an input, might need to focus first
+                is_input = element.tag_name in ["input", "textarea", "select"]
+                
+                # Try to find a good selector for this element
+                selector = None
+                
+                # Try to use ID first if available
+                if "id" in element.attributes and element.attributes["id"]:
+                    selector = f"#{element.attributes['id']}"
+                
+                # Try name attribute next
+                elif "name" in element.attributes and element.attributes["name"]:
+                    selector = f"[name='{element.attributes['name']}']"
+                    
+                # Use element coordinates as fallback
+                coordinates = None
+                if element.page_coordinates:
+                    coordinates = {
+                        "x": element.page_coordinates.x + (element.page_coordinates.width / 2),
+                        "y": element.page_coordinates.y + (element.page_coordinates.height / 2)
+                    }
+                
+                try:
+                    if selector:
+                        print(f"Clicking element with selector: {selector}")
+                        # Focus first for input elements
+                        if is_input:
+                            try:
+                                await context.focus(selector, timeout=5000)
+                            except Exception as focus_error:
+                                print(f"Error focusing element: {focus_error}")
+                        
+                        # Then click
+                        await context.click(selector, timeout=5000)
+                    elif coordinates:
+                        print(f"Clicking element at coordinates: {coordinates}")
+                        # Always use page for mouse operations
+                        page = await browser_instance.get_current_page()
+                        await page.mouse.click(coordinates["x"], coordinates["y"])
+                    else:
+                        return browser_instance.build_action_result(
+                            False,
+                            f"Could not find a way to click element with index {index}",
+                            dom_state,
+                            "",
+                            "",
+                            {},
+                            error=f"No selector or coordinates available for element {index}"
+                        )
+                    
+                    success = True
+                    message = f"Clicked element with index {index}"
+                    error = ""
+                    
+                except Exception as click_error:
+                    print(f"Error clicking element: {click_error}")
+                    traceback.print_exc()
+                    
+                    # Try fallback to coordinates if selector failed
+                    if selector and coordinates:
+                        try:
+                            print(f"Trying fallback click at coordinates: {coordinates}")
+                            # Always use page for mouse operations
+                            page = await browser_instance.get_current_page()
+                            await page.mouse.click(coordinates["x"], coordinates["y"])
+                            success = True
+                            message = f"Clicked element with index {index} using coordinates fallback"
+                            error = ""
+                        except Exception as fallback_error:
+                            print(f"Error in fallback click: {fallback_error}")
+                            success = False
+                            message = f"Failed to click element with index {index}"
+                            error = str(click_error)
+                    else:
                         success = False
                         message = f"Failed to click element with index {index}"
                         error = str(click_error)
-                else:
-                    success = False
-                    message = f"Failed to click element with index {index}"
-                    error = str(click_error)
             
             # Get updated state after action
             page = await browser_instance.get_current_page()
@@ -141,11 +177,12 @@ class InteractionActions:
         try:
             x = action.x
             y = action.y
-            context = await browser_instance.get_current_context()
+            # Always use the page for mouse operations (frames don't have mouse attribute)
+            page = await browser_instance.get_current_page()
             
             try:
                 # Click at the specified coordinates
-                await context.mouse.click(x, y)
+                await page.mouse.click(x, y)
                 
                 success = True
                 message = f"Clicked at coordinates ({x}, {y})"
@@ -185,112 +222,152 @@ class InteractionActions:
     
     @staticmethod
     async def input_text(browser_instance, action: InputTextAction = Body(...)):
-        """Input text into an element by index"""
+        """Input text into an element by selector or index"""
         try:
-            index = action.index
             text = action.text
             context = await browser_instance.get_current_context()
             
             # Get DOM state to find the element
             dom_state = await DOMHandler.get_dom_state(context)
             
-            # Find the element in the selector map
-            if index not in dom_state.selector_map:
-                return browser_instance.build_action_result(
-                    False,
-                    f"Element with index {index} not found",
-                    dom_state,
-                    "",
-                    "",
-                    {},
-                    error=f"Element with index {index} not found"
-                )
-            
-            element = dom_state.selector_map[index]
-            
-            # Try to find a good selector for this element
-            selector = None
-            
-            # Try to use ID first if available
-            if "id" in element.attributes and element.attributes["id"]:
-                selector = f"#{element.attributes['id']}"
-            
-            # Try name attribute next
-            elif "name" in element.attributes and element.attributes["name"]:
-                selector = f"[name='{element.attributes['name']}']"
+            # Check if we have a CSS selector
+            if action.selector:
+                try:
+                    # Use CSS selector to find the element
+                    element_handle = await context.query_selector(action.selector)
+                    if not element_handle:
+                        return browser_instance.build_action_result(
+                            False,
+                            f"Element with selector '{action.selector}' not found",
+                            dom_state,
+                            "",
+                            "",
+                            {},
+                            error=f"Element with selector '{action.selector}' not found"
+                        )
+                    
+                    # Clear existing content and input new text
+                    await element_handle.click()  # Focus the element
+                    await element_handle.fill(text)  # Fill with new text
+                    
+                    success = True
+                    message = f"Input text '{text}' into element with selector '{action.selector}'"
+                    error = ""
+                    
+                except Exception as input_error:
+                    print(f"Error inputting text into element with selector '{action.selector}': {input_error}")
+                    traceback.print_exc()
+                    success = False
+                    message = f"Failed to input text into element with selector '{action.selector}'"
+                    error = str(input_error)
+            else:
+                # Use index-based selection (fallback)
+                index = action.index if action.index is not None else 0
                 
-            # Use element coordinates as fallback
-            coordinates = None
-            if element.page_coordinates:
-                coordinates = {
-                    "x": element.page_coordinates.x + (element.page_coordinates.width / 2),
-                    "y": element.page_coordinates.y + (element.page_coordinates.height / 2)
-                }
-            
-            try:
-                if selector:
-                    print(f"Inputting text into element with selector: {selector}")
-                    
-                    # First clear the field
-                    await context.fill(selector, "", timeout=5000)
-                    
-                    # Then input the text
-                    await context.fill(selector, text, timeout=5000)
-                elif coordinates:
-                    print(f"Clicking at coordinates for text input: {coordinates}")
-                    
-                    # Click to focus
-                    await context.mouse.click(coordinates["x"], coordinates["y"])
-                    
-                    # Type the text
-                    await context.keyboard.type(text)
-                else:
+                # Find the element in the selector map
+                if index not in dom_state.selector_map:
                     return browser_instance.build_action_result(
                         False,
-                        f"Could not find a way to input text into element with index {index}",
+                        f"Element with index {index} not found",
                         dom_state,
                         "",
                         "",
                         {},
-                        error=f"No selector or coordinates available for element {index}"
+                        error=f"Element with index {index} not found"
                     )
                 
-                success = True
-                message = f"Input text into element with index {index}"
-                error = ""
-            except Exception as input_error:
-                print(f"Error inputting text: {input_error}")
-                traceback.print_exc()
+                element = dom_state.selector_map[index]
                 
-                # Try fallback to coordinates and keyboard if selector failed
-                if selector and coordinates:
-                    try:
-                        print(f"Trying fallback click at coordinates for text input: {coordinates}")
+                # Try to find a good selector for this element
+                selector = None
+                
+                # Try to use ID first if available
+                if "id" in element.attributes and element.attributes["id"]:
+                    selector = f"#{element.attributes['id']}"
+                
+                # Try name attribute next
+                elif "name" in element.attributes and element.attributes["name"]:
+                    selector = f"[name='{element.attributes['name']}']"
+                    
+                # Use element coordinates as fallback
+                coordinates = None
+                if element.page_coordinates:
+                    coordinates = {
+                        "x": element.page_coordinates.x + (element.page_coordinates.width / 2),
+                        "y": element.page_coordinates.y + (element.page_coordinates.height / 2)
+                    }
+                
+                try:
+                    if selector:
+                        print(f"Inputting text into element with selector: {selector}")
+                        
+                        # First clear the field
+                        await context.fill(selector, "", timeout=5000)
+                        
+                        # Then input the text
+                        await context.fill(selector, text, timeout=5000)
+                    elif coordinates:
+                        print(f"Clicking at coordinates for text input: {coordinates}")
+                        
+                        # Always use page for mouse operations
+                        page = await browser_instance.get_current_page()
                         
                         # Click to focus
-                        await context.mouse.click(coordinates["x"], coordinates["y"])
-                        
-                        # Select all text (Ctrl+A or Command+A)
-                        await context.keyboard.press("Control+a")
-                        
-                        # Delete existing text
-                        await context.keyboard.press("Backspace")
+                        await page.mouse.click(coordinates["x"], coordinates["y"])
                         
                         # Type the text
-                        await context.keyboard.type(text)
-                        
-                        success = True
-                        message = f"Input text into element with index {index} using coordinates fallback"
-                        error = ""
-                    except Exception as fallback_error:
-                        print(f"Error in fallback text input: {fallback_error}")
+                        await page.keyboard.type(text)
+                    else:
+                        return browser_instance.build_action_result(
+                            False,
+                            f"Could not find a way to input text into element with index {index}",
+                            dom_state,
+                            "",
+                            "",
+                            {},
+                            error=f"No selector or coordinates available for element {index}"
+                        )
+                    
+                    success = True
+                    message = f"Input text into element with index {index}"
+                    error = ""
+                    
+                except Exception as input_error:
+                    print(f"Error inputting text: {input_error}")
+                    traceback.print_exc()
+                    
+                    # Try fallback to coordinates and keyboard if selector failed
+                    if selector and coordinates:
+                        try:
+                            print(f"Trying fallback click at coordinates for text input: {coordinates}")
+                            
+                            # Always use page for mouse and keyboard operations
+                            page = await browser_instance.get_current_page()
+                            
+                            # Click to focus
+                            await page.mouse.click(coordinates["x"], coordinates["y"])
+                            
+                            # Select all text (Ctrl+A or Command+A)
+                            await page.keyboard.press("Control+a")
+                            
+                            # Delete existing text
+                            await page.keyboard.press("Backspace")
+                            
+                            # Type the text
+                            await page.keyboard.type(text)
+                            
+                            success = True
+                            message = f"Input text into element with index {index} using coordinates fallback"
+                            error = ""
+                        except Exception as fallback_error:
+                            print(f"Error in fallback text input: {fallback_error}")
+                            success = False
+                            message = f"Failed to input text into element with index {index}"
+                            error = str(input_error)
+                    else:
                         success = False
                         message = f"Failed to input text into element with index {index}"
                         error = str(input_error)
-                else:
-                    success = False
-                    message = f"Failed to input text into element with index {index}"
-                    error = str(input_error)
             
             # Get updated state after action
             page = await browser_instance.get_current_page()
@@ -323,11 +400,12 @@ class InteractionActions:
         """Send keyboard keys to the active element"""
         try:
             keys = action.keys
-            context = await browser_instance.get_current_context()
+            # Always use page for keyboard operations (frames don't have keyboard attribute)
+            page = await browser_instance.get_current_page()
             
             try:
                 # Send the keys
-                await context.keyboard.type(keys)
+                await page.keyboard.type(keys)
                 
                 success = True
                 message = f"Sent keys: {keys}"

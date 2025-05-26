@@ -6,7 +6,7 @@ import traceback
 from typing import Dict, Tuple, Any
 import asyncio
 
-from ..models.dom_models import (
+from browser_api.models.dom_models import (
     DOMState, DOMElementNode, DOMTextNode, CoordinateSet
 )
 
@@ -254,7 +254,7 @@ class DOMHandler:
             - Formatted elements string
             - Metadata dictionary
         """
-        from ..utils.screenshot_utils import ScreenshotUtils
+        from browser_api.utils.screenshot_utils import ScreenshotUtils
         
         metadata = {}
         

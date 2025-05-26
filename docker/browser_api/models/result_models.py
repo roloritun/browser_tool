@@ -17,7 +17,7 @@ class BrowserActionResult(BaseModel):
     screenshot_base64: Optional[str] = None
     pixels_above: int = 0
     pixels_below: int = 0
-    content: Optional[str] = None
+    content: Optional[Any] = None
     ocr_text: Optional[str] = None  # Added field for OCR text
     
     # Additional metadata

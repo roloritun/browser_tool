@@ -51,7 +51,7 @@ class SandboxManager:
         print("🚀 Creating Daytona sandbox with Chrome browser...")
 
         # Custom Docker image containing Chrome and necessary components
-        image = "harbor-transient.internal.daytona.app/daytona/composer:2.0.0"
+        image = "harbor-transient.internal.daytona.app/daytona/composer:4.0.0"
         # os.getenv(
         #     "DAYTONA_IMAGE",
         #     "harbor-transient.internal.daytona.app/daytona/roloritun/compose:0.0.1"
@@ -99,7 +99,7 @@ class SandboxManager:
                 print(f"✅ NOVNC Protocol URL: {novnc_url}")
                 print(f"✅ NOVNC Protocol token: {novnc.token}")
 
-                api = sandbox.get_preview_link(8002)  # API port (matching Docker container port)
+                api = sandbox.get_preview_link(8000)  # API port (matching Docker container port)
                 api_url = api.url
                 print(f"✅ API Protocol URL: {api_url}")
 
@@ -108,7 +108,7 @@ class SandboxManager:
                 print(f"✅ WEB Protocol URL: {web_url}")
 
                 # Use web URL as x_url since we don't need another preview link
-                x = sandbox.get_preview_link(8000)  # Web interface port                
+                x = sandbox.get_preview_link(8002)  # X port
                 x_url = x.url
                 print(f"✅ Using X URL as additional URL: {x_url}")
 

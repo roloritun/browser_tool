@@ -3,11 +3,10 @@ Scrolling actions for browser automation.
 This module provides functionality for scrolling the page.
 """
 import traceback
-from typing import Dict, Any
 
 from fastapi import Body
-from ..models.action_models import ScrollAction, NoParamsAction
-from ..core.dom_handler import DOMHandler
+from browser_api.models.action_models import ScrollAction, ScrollToTextAction
+from browser_api.core.dom_handler import DOMHandler
 
 class ScrollActions:
     """Scrolling-related browser actions"""
@@ -110,13 +109,13 @@ class ScrollActions:
             )
     
     @staticmethod
-    async def scroll_to_text(browser_instance, action: Dict[str, str] = Body(...)):
+    async def scroll_to_text(browser_instance, action: ScrollToTextAction = Body(...)):
         """Scroll to text on the current page"""
         try:
             page = await browser_instance.get_current_page()
             
             # Get the text to scroll to
-            text = action.get("text", "")
+            text = action.text
             if not text:
                 return browser_instance.build_action_result(
                     False,
@@ -223,6 +222,96 @@ class ScrollActions:
             )
         except Exception as e:
             print(f"Unexpected error in scroll_to_text: {e}")
+            traceback.print_exc()
+            return browser_instance.build_action_result(
+                False,
+                str(e),
+                None,
+                "",
+                "",
+                {},
+                error=str(e)
+            )
+    
+    @staticmethod
+    async def scroll_to_top(browser_instance, action = Body(...)):
+        """Scroll to the top of the page"""
+        try:
+            page = await browser_instance.get_current_page()
+            
+            try:
+                # Scroll to the top of the page
+                await page.evaluate("window.scrollTo(0, 0)")
+                
+                success = True
+                message = "Scrolled to top of page"
+                error = ""
+            except Exception as scroll_error:
+                print(f"Error scrolling to top: {scroll_error}")
+                traceback.print_exc()
+                success = False
+                message = "Failed to scroll to top"
+                error = str(scroll_error)
+            
+            # Get updated state after action
+            dom_state, screenshot, elements, metadata = await DOMHandler.get_updated_browser_state(page, "scroll_to_top")
+            
+            return browser_instance.build_action_result(
+                success,
+                message,
+                dom_state,
+                screenshot,
+                elements,
+                metadata,
+                error=error
+            )
+        except Exception as e:
+            print(f"Unexpected error in scroll_to_top: {e}")
+            traceback.print_exc()
+            return browser_instance.build_action_result(
+                False,
+                str(e),
+                None,
+                "",
+                "",
+                {},
+                error=str(e)
+            )
+
+    @staticmethod
+    async def scroll_to_bottom(browser_instance, action = Body(...)):
+        """Scroll to the bottom of the page"""
+        try:
+            page = await browser_instance.get_current_page()
+            
+            try:
+                # Scroll to the bottom of the page
+                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                
+                success = True
+                message = "Scrolled to bottom of page"
+                error = ""
+            except Exception as scroll_error:
+                print(f"Error scrolling to bottom: {scroll_error}")
+                traceback.print_exc()
+                success = False
+                message = "Failed to scroll to bottom"
+                error = str(scroll_error)
+            
+            # Get updated state after action
+            dom_state, screenshot, elements, metadata = await DOMHandler.get_updated_browser_state(page, "scroll_to_bottom")
+            
+            return browser_instance.build_action_result(
+                success,
+                message,
+                dom_state,
+                screenshot,
+                elements,
+                metadata,
+                error=error
+            )
+        except Exception as e:
+            print(f"Unexpected error in scroll_to_bottom: {e}")
             traceback.print_exc()
             return browser_instance.build_action_result(
                 False,

@@ -1,0 +1,85 @@
+# Git and version control
+.git
+.gitignore
+.gitattributes
+
+# Python cache and virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.pytest_cache/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Documentation and non-essential files
+*.md
+*.rst
+docs/
+.readthedocs.yml
+
+# Build artifacts and temporary files
+build/
+dist/
+*.egg-info/
+.eggs/
+.coverage
+htmlcov/
+.tox/
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+
+# Screenshots and temporary outputs (but keep workspace/)
+screenshots/
+logs/
+*.log
+
+# Backup files
+*.backup
+*.bak
+backups/
+
+# Test files that aren't needed in production
+*test*.py
+test_*
+tests/
+
+# Docker files not needed in container
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Development scripts
+run_tests.py
+transition_browser_api.py
+*.py.new
+
+# Local configuration files that shouldn't be in container
+.env.local
+.env.development
+config.local.*

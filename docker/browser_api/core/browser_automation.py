@@ -11,8 +11,8 @@ from typing import Dict, List, Tuple, Optional, Any
 from fastapi import APIRouter, Body, HTTPException
 from playwright.async_api import async_playwright, Browser, Page
 
-from ..models.dom_models import DOMState, DOMElementNode
-from ..models.result_models import BrowserActionResult
+from browser_api.models.dom_models import DOMState, DOMElementNode
+from browser_api.models.result_models import BrowserActionResult
 
 class BrowserAutomation:
     def __init__(self):
