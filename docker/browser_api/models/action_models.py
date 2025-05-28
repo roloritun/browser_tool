@@ -10,7 +10,7 @@ class Position(BaseModel):
     y: int
 
 class ClickElementAction(BaseModel):
-    selector: str
+    selector: Optional[str] = None
     index: Optional[int] = 0
 
 class ClickCoordinatesAction(BaseModel):
@@ -21,7 +21,7 @@ class GoToUrlAction(BaseModel):
     url: str
 
 class InputTextAction(BaseModel):
-    selector: str
+    selector: Optional[str] = None
     text: str
     index: Optional[int] = 0
 

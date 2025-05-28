@@ -16,6 +16,7 @@ from browser_api.actions.dialog import DialogActions
 from browser_api.actions.frame import FrameActions
 from browser_api.actions.network import NetworkActions
 from browser_api.actions.drag_drop import DragDropActions
+from browser_api.actions.human_intervention import HumanInterventionActions
 from browser_api.models.action_models import (
     GoToUrlAction,
     SearchGoogleAction,
@@ -38,6 +39,13 @@ from browser_api.models.action_models import (
     PDFOptionsAction,
     GetDropdownOptionsAction,
     SelectDropdownOptionAction
+)
+from browser_api.models.intervention_models import (
+    InterventionRequestAction,
+    InterventionCompleteAction,
+    InterventionCancelAction,
+    InterventionStatusAction,
+    AutoDetectAction
 )
 
 # Global browser automation instance
@@ -233,6 +241,27 @@ def create_app() -> FastAPI:
     @app.post("/automation/select_dropdown_option", tags=["browser"])
     async def select_dropdown_option(action: SelectDropdownOptionAction):
         return await InteractionActions.click_element(browser_automation, action)
+    
+    # Register routes for human intervention
+    @app.post("/automation/request_intervention", tags=["human_intervention"])
+    async def request_intervention(action: InterventionRequestAction):
+        return await HumanInterventionActions.request_intervention(browser_automation, action)
+    
+    @app.post("/automation/complete_intervention", tags=["human_intervention"])
+    async def complete_intervention(action: InterventionCompleteAction):
+        return await HumanInterventionActions.complete_intervention(browser_automation, action)
+    
+    @app.post("/automation/cancel_intervention", tags=["human_intervention"])
+    async def cancel_intervention(action: InterventionCancelAction):
+        return await HumanInterventionActions.cancel_intervention(browser_automation, action)
+    
+    @app.post("/automation/intervention_status", tags=["human_intervention"])
+    async def intervention_status(action: InterventionStatusAction):
+        return await HumanInterventionActions.get_intervention_status(browser_automation, action)
+    
+    @app.post("/automation/auto_detect_intervention", tags=["human_intervention"])
+    async def auto_detect_intervention(action: AutoDetectAction):
+        return await HumanInterventionActions.auto_detect_intervention_needed(browser_automation, action)
     
     return app
 

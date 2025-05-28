@@ -36,29 +36,29 @@ class SandboxManager:
             sys.exit(1)
 
     def create_sandbox(self) -> Tuple[str, str, str, str, str, str, str]:
-        """Create a Daytona sandbox with Chrome browser
+        """Create a Daytona sandbox with Chrome browser and human intervention support
 
         Returns:
             Tuple[str, str, str, str, str, str, str]: Returns:
                 - sandbox_id: The ID of the created sandbox
                 - cdp_url: Chrome DevTools Protocol URL
-                - vnc_url: VNC URL for remote access
-                - novnc_url: NoVNC URL for browser-based VNC
-                - api_url: API server URL
+                - vnc_url: VNC URL for remote access (for human intervention)
+                - novnc_url: NoVNC URL for browser-based VNC (for human intervention)
+                - api_url: API server URL (enhanced with intervention endpoints)
                 - web_url: Web interface URL
                 - x_url: Additional URL (if any)
         """
-        print("🚀 Creating Daytona sandbox with Chrome browser...")
+        print("🚀 Creating Daytona sandbox with Chrome browser and human intervention support...")
 
         # Custom Docker image containing Chrome and necessary components
-        image = "harbor-transient.internal.daytona.app/daytona/composer:4.0.0"
+        image = "harbor-transient.internal.daytona.app/daytona/composer:4.0.9"
         # os.getenv(
         #     "DAYTONA_IMAGE",
         #     "harbor-transient.internal.daytona.app/daytona/roloritun/compose:0.0.1"
         # )
 
         try:
-            # Create the sandbox
+            # Create the sandbox with enhanced environment variables for intervention support
             sandbox = self.daytona.create(
                 CreateSandboxParams(
                     # language="python",
@@ -74,6 +74,12 @@ class SandboxManager:
                         "CHROME_DEBUGGING_HOST": "localhost",
                         "CHROME_CDP": "",
                         "API_PORT": "8000",
+                        # Human intervention specific variables
+                        "HUMAN_INTERVENTION_ENABLED": "true",
+                        "VNC_PASSWORD": os.getenv("VNC_PASSWORD", "vncpassword"),
+                        "INTERVENTION_TIMEOUT": "300",
+                        "SCREENSHOT_DIR": "/app/screenshots",
+                        "INTERVENTION_UI_ENABLED": "true"
                     },
                     resources={
                         "cpu": 2,
@@ -83,34 +89,45 @@ class SandboxManager:
                 )
             )
             print(f"✅ Sandbox created with ID: {sandbox.id}")
+            print("🛡️ Human intervention support enabled with VNC access")
 
-            # Get CDP URL for Chrome DevTools Protocol
+            # Get all required URLs for browser automation and human intervention
             try:
                 cdp = sandbox.get_preview_link(9222)
                 cdp_url = cdp.url
                 print(f"✅ Chrome DevTools Protocol URL: {cdp_url}")
 
-                vnc = sandbox.get_preview_link(5901)  # VNC port
+                vnc = sandbox.get_preview_link(5901)  # VNC port for direct access
                 vnc_url = vnc.url
-                print(f"✅ VNC Protocol URL: {vnc_url}")
+                print(f"✅ VNC Protocol URL (for human intervention): {vnc_url}")
 
-                novnc = sandbox.get_preview_link(6080)  # NoVNC port
+                novnc = sandbox.get_preview_link(6080)  # NoVNC port for browser-based access
                 novnc_url = novnc.url
-                print(f"✅ NOVNC Protocol URL: {novnc_url}")
-                print(f"✅ NOVNC Protocol token: {novnc.token}")
+                print(f"✅ NoVNC Protocol URL (for browser-based intervention): {novnc_url}")
+                #print(f"🔑 NoVNC access token: {novnc.token}")
 
-                api = sandbox.get_preview_link(8000)  # API port (matching Docker container port)
+                api = sandbox.get_preview_link(8000)  # API port (enhanced with intervention endpoints)
                 api_url = api.url
-                print(f"✅ API Protocol URL: {api_url}")
+                print(f"✅ API Protocol URL (with intervention endpoints): {api_url}")
 
                 web = sandbox.get_preview_link(8080)  # Web interface port
                 web_url = web.url
                 print(f"✅ WEB Protocol URL: {web_url}")
 
-                # Use web URL as x_url since we don't need another preview link
-                x = sandbox.get_preview_link(8002)  # X port
+                # Browser API port for intervention management
+                x = sandbox.get_preview_link(8002)  # Browser API port
                 x_url = x.url
-                print(f"✅ Using X URL as additional URL: {x_url}")
+                print(f"✅ Browser API URL (intervention management): {x_url}")
+
+                print("\n🎯 Human Intervention Setup Complete!")
+                print("=" * 60)
+                print("For human intervention during automation:")
+                print(f"• Browser Access (NoVNC): {novnc_url}")
+                print(f"• VNC Password: {os.getenv('VNC_PASSWORD', 'vncpassword')}")
+                print(f"• API Endpoints: {api_url}/docs")
+                print("• When intervention is needed, you'll see a red banner on the page")
+                print("• Complete the task manually and click 'Task Complete' to resume")
+                print("=" * 60)
 
                 return sandbox.id, cdp_url, vnc_url, novnc_url, api_url, web_url, x_url
             except Exception as e:

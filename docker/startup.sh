@@ -34,6 +34,7 @@ log "- HTTP_PORT: $HTTP_PORT"
 # Create required directories with proper permissions for root user
 log "Setting up required directories..."
 mkdir -p /var/log/supervisor /var/run/supervisor /var/log/vnc /tmp/.X11-unix
+
 chmod 755 /var/log/supervisor /var/run/supervisor /var/log/vnc 2>/dev/null || true
 chmod 1777 /tmp/.X11-unix 2>/dev/null || true
 

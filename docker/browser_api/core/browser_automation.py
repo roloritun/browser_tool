@@ -39,14 +39,15 @@ class BrowserAutomation:
             playwright = await async_playwright().start()
             print("Playwright started, launching browser...")
             
-            # Use non-headless mode for testing with slower timeouts
+            # Use non-headless mode for VNC visibility with slower timeouts
             launch_options = {
                 "headless": False,
                 "timeout": 120000,  # Increase timeout to 2 minutes
                 "args": [
                     "--no-sandbox",
                     "--disable-dev-shm-usage",
-                    "--disable-gpu"
+                    "--disable-gpu",
+                    "--display=:99"  # Ensure browser uses the VNC display
                 ]
             }
             

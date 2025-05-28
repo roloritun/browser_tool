@@ -7,7 +7,7 @@ import asyncio
 from typing import Dict, Any
 
 from fastapi import Body
-from browser_api.models.action_models import NoParamsAction
+from browser_api.models.action_models import NoParamsAction, ExtractContentAction
 from browser_api.core.dom_handler import DOMHandler
 from browser_api.utils.pdf_utils import PDFUtils
 from browser_api.utils.screenshot_utils import ScreenshotUtils
@@ -16,7 +16,7 @@ class ContentActions:
     """Content extraction and PDF generation browser actions"""
     
     @staticmethod
-    async def extract_content(browser_instance, _: NoParamsAction = Body(...)):
+    async def extract_content(browser_instance, action: ExtractContentAction = Body(...)):
         """Extract content from the current page"""
         try:
             page = await browser_instance.get_current_page()
@@ -31,6 +31,8 @@ class ContentActions:
                 
                 success = True
                 message = "Extracted content from page"
+                if action.goal:
+                    message += f" (Goal: {action.goal})"
                 error = ""
             except Exception as extract_error:
                 print(f"Error extracting content: {extract_error}")
