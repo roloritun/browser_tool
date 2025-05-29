@@ -15,6 +15,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from src.tools.utilities.sandbox_manager import SandboxManager
 from src.tools.utilities.browser_tools_init import get_browser_tools
 from src.utils.logger import logger
+from src.utils.novnc_viewer import generate_novnc_viewer
 
 
 async def test_sandbox_and_tools():
@@ -30,6 +31,19 @@ async def test_sandbox_and_tools():
         logger.info(f"✅ Sandbox created: {sandbox_id}")
         logger.info(f"📺 NoVNC URL: {novnc_url}")
         logger.info(f"🔗 API URL: {api_url}")
+        
+        # Generate and open NoVNC viewer for real-time monitoring
+        logger.info("🖥️ Opening NoVNC viewer for real-time monitoring...")
+        try:
+            viewer_path = generate_novnc_viewer(
+                novnc_url=novnc_url,
+                vnc_password="vncpassword",
+                auto_open=True
+            )
+            logger.info(f"✅ NoVNC viewer opened: {viewer_path}")
+        except Exception as e:
+            logger.warning(f"⚠️ Could not open NoVNC viewer: {e}")
+            logger.info(f"🌐 You can manually open: {novnc_url}")
         
         # Wait for API to be ready and initialize tools with retry
         logger.info("Waiting for browser API to be ready...")

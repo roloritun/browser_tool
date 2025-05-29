@@ -5,6 +5,11 @@ This is useful when you want to reuse an existing browser sandbox
 instead of creating a new one each time.
 """
 
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+
 import asyncio
 import os
 import sys

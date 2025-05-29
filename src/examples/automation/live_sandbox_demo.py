@@ -4,6 +4,11 @@ Live Sandbox Demo
 Creates a Daytona sandbox and shows the live browser URLs for manual testing.
 """
 
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+
 import asyncio
 import os
 import sys

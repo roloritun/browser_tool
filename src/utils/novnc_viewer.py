@@ -1,22 +1,81 @@
 """
-NoVNC Viewer Utility
+Advanced NoVNC Viewer Utility
 
-This module provides functionality to create and open HTML viewers for NoVNC interfaces
-during browser automation demos. It helps users visualize what's happening in the sandbox
-by providing direct access to the VNC interface through a web browser.
+This module provides functionality to create and open advanced HTML viewers for NoVNC interfaces
+during browser automation demos with comprehensive human intervention capabilities.
+
+Features:
+- Advanced UI with controls and status indicators
+- Take control and stop automation buttons
+- Info panel with demo details
+- Connection status monitoring
+- Fullscreen support
+- Responsive design
 """
 
 import webbrowser
 from pathlib import Path
+from .advanced_novnc_viewer import generate_advanced_novnc_viewer
+from typing import Optional
 
 
-def generate_novnc_viewer(novnc_url: str, vnc_password: str = "secret", auto_open: bool = True) -> str:
+def generate_novnc_viewer(
+    novnc_url: str, 
+    vnc_password: Optional[str] = None, 
+    auto_open: bool = True,
+    demo_name: str = "Browser Automation Demo",
+    demo_description: str = "Browser automation with human intervention"
+) -> str:
     """
-    Generate an HTML viewer for NoVNC interface and optionally open it in browser.
+    Generate an advanced NoVNC viewer with comprehensive controls and monitoring.
+    
+    This function provides an enhanced viewer with:
+    - Professional UI with status indicators
+    - Human intervention controls (take control, stop, help)
+    - Connection monitoring and error handling
+    - Fullscreen support and responsive design
+    - Session timing and information panel
     
     Args:
         novnc_url: The NoVNC URL from sandbox creation
-        vnc_password: VNC password (default: "secret")
+        vnc_password: VNC password (optional)
+        auto_open: Whether to automatically open the viewer in browser
+        demo_name: Display name for the demo
+        demo_description: Description of what the demo does
+        
+    Returns:
+        Path to the generated HTML file
+    """
+    return generate_advanced_novnc_viewer(
+        novnc_url=novnc_url,
+        vnc_password=vnc_password or "vncpassword",
+        auto_open=auto_open,
+        demo_name=demo_name,
+        demo_description=demo_description,
+        show_intervention_controls=True,
+        custom_info={
+            "Demo Type": "Browser Automation",
+            "Connection": "NoVNC Remote Desktop",
+            "Status": "Active",
+            "Features": "Human Intervention Enabled",
+            "Keyboard Shortcuts": "F11: Fullscreen, Ctrl+I: Toggle Info"
+        },
+        window_width=1400,
+        window_height=900
+    )
+
+
+def generate_simple_novnc_viewer(
+    novnc_url: str, 
+    vnc_password: Optional[str] = None, 
+    auto_open: bool = True
+) -> str:
+    """
+    Generate a simple HTML viewer for NoVNC interface (legacy function).
+    
+    Args:
+        novnc_url: The NoVNC URL from sandbox creation
+        vnc_password: VNC password (default: "vncpassword")
         auto_open: Whether to automatically open the viewer in browser
         
     Returns:
@@ -46,8 +105,7 @@ def generate_novnc_viewer(novnc_url: str, vnc_password: str = "secret", auto_ope
         .header {{
             text-align: center;
             margin-bottom: 20px;
-            color: #333;
-        }}
+            color: #333;        }}
         .info {{
             background-color: #e8f4fd;
             padding: 15px;
@@ -93,10 +151,10 @@ def generate_novnc_viewer(novnc_url: str, vnc_password: str = "secret", auto_ope
         </div>
         
         <div class="credentials">
-            <strong>🔑 VNC Password:</strong> <code>{vnc_password}</code>
+            <strong>🔑 VNC Password:</strong> <code>{vnc_password or "vncpassword"}</code>
         </div>
         
-        <iframe 
+        <iframe
             id="novnc-frame" 
             src="{novnc_url}?autoconnect=true" 
             class="viewer-frame"
@@ -113,13 +171,13 @@ def generate_novnc_viewer(novnc_url: str, vnc_password: str = "secret", auto_ope
         # Create output directory and file
         output_dir = Path(__file__).parent.parent / "tools" / "templates"
         output_dir.mkdir(parents=True, exist_ok=True)
-        output_path = output_dir / "demo_novnc_viewer.html"
+        output_path = output_dir / "simple_novnc_viewer.html"
         
         # Write the HTML file
         with open(output_path, "w") as f:
             f.write(html_template)
         
-        print(f"✅ NoVNC viewer generated: {output_path}")
+        print(f"✅ Simple NoVNC viewer generated: {output_path}")
         
         # Auto-open in browser if requested
         if auto_open:
@@ -128,7 +186,7 @@ def generate_novnc_viewer(novnc_url: str, vnc_password: str = "secret", auto_ope
         return str(output_path)
         
     except Exception as e:
-        print(f"❌ Failed to generate NoVNC viewer: {e}")
+        print(f"❌ Failed to generate simple NoVNC viewer: {e}")
         return ""
 
 

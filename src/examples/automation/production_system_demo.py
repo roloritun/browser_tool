@@ -23,6 +23,11 @@ with human intervention capabilities. This demo showcases:
 This demo represents the culmination of advanced browser automation with AI.
 """
 
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+
 import asyncio
 import os
 import time

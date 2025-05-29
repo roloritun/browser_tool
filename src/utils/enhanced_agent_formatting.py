@@ -177,3 +177,66 @@ Begin your research following the exact format above.
         template=template,
         input_variables=["tools", "tool_names", "chat_history", "input", "agent_scratchpad"]
     )
+
+
+def create_enhanced_react_agent(
+    llm,
+    tools,
+    max_iterations: int = 15,
+    max_execution_time: int = 600,
+    return_intermediate_steps: bool = True,
+    handle_parsing_errors: bool = True,
+    **kwargs
+):
+    """
+    Create an enhanced ReAct agent with improved error handling and formatting.
+    
+    Args:
+        llm: The language model to use
+        tools: List of tools available to the agent
+        max_iterations: Maximum number of iterations (default: 15)
+        max_execution_time: Maximum execution time in seconds (default: 600)
+        return_intermediate_steps: Whether to return intermediate steps (default: True)
+        handle_parsing_errors: Whether to handle parsing errors gracefully (default: True)
+        **kwargs: Additional arguments passed to the agent
+    
+    Returns:
+        AgentExecutor: Configured agent executor with enhanced error handling
+    """
+    from langchain.agents import create_react_agent, AgentExecutor
+    
+    try:
+        # Create enhanced prompt
+        prompt = create_enhanced_business_prompt()
+        
+        # Create enhanced output parser
+        output_parser = ImprovedReActOutputParser()
+        
+        # Create the agent with enhanced prompt and parser
+        agent = create_react_agent(
+            llm=llm,
+            tools=tools,
+            prompt=prompt,
+            output_parser=output_parser if handle_parsing_errors else None,
+            **kwargs
+        )
+        
+        # Create agent executor with enhanced configuration
+        agent_executor = AgentExecutor(
+            agent=agent,
+            tools=tools,
+            max_iterations=max_iterations,
+            max_execution_time=max_execution_time,
+            return_intermediate_steps=return_intermediate_steps,
+            handle_parsing_errors=handle_parsing_errors,
+            verbose=True  # Enable verbose output for better debugging
+        )
+        
+        logger.info(f"✅ Enhanced ReAct agent created with {len(tools)} tools")
+        logger.info(f"📊 Configuration: max_iterations={max_iterations}, max_time={max_execution_time}s")
+        
+        return agent_executor
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to create enhanced ReAct agent: {e}")
+        raise RuntimeError(f"Agent creation failed: {e}") from e

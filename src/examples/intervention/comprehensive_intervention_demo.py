@@ -4,6 +4,11 @@ Comprehensive Human Intervention Demo - Fixed Version
 This demo showcases all features of the enhanced intervention system with proper error handling.
 """
 
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+
 import asyncio
 import sys
 import os
