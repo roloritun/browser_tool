@@ -403,7 +403,7 @@ class LiveTestingDemo:
             logger.info(f"  {i}. {scenario['name']}: {scenario['description']}")
         
         # Run a sample interactive scenario
-        task = f"""
+        task = """
         Welcome to Interactive Testing Mode! 
         
         You are now in a live testing environment where humans can observe and guide testing.
@@ -580,15 +580,15 @@ class LiveTestingDemo:
         
         self.test_results["coverage_percentage"] = (len(available_tool_names) / 44) * 100
         
-        logger.info(f"📊 Tool Coverage Analysis:")
-        logger.info(f"├─ Expected Tools: 44")
+        logger.info("📊 Tool Coverage Analysis:")
+        logger.info("├─ Expected Tools: 44")
         logger.info(f"├─ Available Tools: {len(self.tools)}")
         logger.info(f"├─ Coverage: {self.test_results['coverage_percentage']:.1f}%")
         
         if coverage_results["missing_tools"]:
             logger.warning(f"├─ Missing Tools: {', '.join(coverage_results['missing_tools'])}")
         else:
-            logger.info(f"├─ ✅ All expected tools available!")
+            logger.info("├─ ✅ All expected tools available!")
         
         if coverage_results["extra_tools"]:
             logger.info(f"└─ Extra Tools: {', '.join(coverage_results['extra_tools'])}")
@@ -653,7 +653,7 @@ class LiveTestingDemo:
         print("="*80)
         
         # Overall Summary
-        print(f"📊 OVERALL TESTING PERFORMANCE:")
+        print("📊 OVERALL TESTING PERFORMANCE:")
         print(f"├─ Total Test Sessions: {len(self.test_results['test_sessions'])}")
         print(f"├─ Tools Available: {len(self.tools)}/44")
         print(f"├─ Tool Coverage: {self.test_results['coverage_percentage']:.1f}%")
@@ -663,13 +663,13 @@ class LiveTestingDemo:
         print(f"└─ Total Duration: {total_duration:.1f}s")
         
         # Testing Mode Summary
-        print(f"\n🧪 TESTING MODE SUMMARY:")
+        print("\n🧪 TESTING MODE SUMMARY:")
         print(f"├─ Primary Mode: {self.test_results['testing_mode']}")
-        print(f"├─ Available Modes: Quick, Interactive, Comprehensive, Validation")
-        print(f"└─ NoVNC Monitoring: Available throughout testing")
+        print("├─ Available Modes: Quick, Interactive, Comprehensive, Validation")
+        print("└─ NoVNC Monitoring: Available throughout testing")
         
         # Session Results
-        print(f"\n📋 SESSION BREAKDOWN:")
+        print("\n📋 SESSION BREAKDOWN:")
         for i, session in enumerate(self.test_results["test_sessions"], 1):
             status = "✅ PASS" if session.get("success", False) else "❌ FAIL"
             session_type = session.get("session_type", "unknown").replace("_", " ").title()
@@ -678,7 +678,7 @@ class LiveTestingDemo:
             print(f"│  └─ Duration: {duration:.1f}s")
         
         # Tool Categories Performance
-        print(f"\n🔧 TOOL CATEGORY ANALYSIS:")
+        print("\n🔧 TOOL CATEGORY ANALYSIS:")
         for category, tools in ALL_BROWSER_TOOLS.items():
             category_name = category.replace("_", " ").title()
             print(f"├─ {category_name}: {len(tools)} tools")
@@ -687,11 +687,11 @@ class LiveTestingDemo:
         sessions_passed = sum(1 for s in self.test_results["test_sessions"] if s.get("success", False))
         success_rate = (sessions_passed / len(self.test_results["test_sessions"])) * 100 if self.test_results["test_sessions"] else 0
         
-        print(f"\n📈 PERFORMANCE METRICS:")
+        print("\n📈 PERFORMANCE METRICS:")
         print(f"├─ Session Success Rate: {success_rate:.1f}%")
         print(f"├─ Average Session Duration: {total_duration/len(self.test_results['test_sessions']):.1f}s" if self.test_results["test_sessions"] else "N/A")
         print(f"├─ Testing Efficiency: {self.test_results['coverage_percentage']/total_duration*60:.1f} tools/min")
-        print(f"└─ Environment: Daytona Sandbox + NoVNC Monitoring")
+        print("└─ Environment: Daytona Sandbox + NoVNC Monitoring")
         
         print("\n" + "="*80)
         print("🎉 LIVE TESTING DEMO COMPLETED!")

@@ -25,9 +25,6 @@ import os
 import asyncio
 import time
 import logging
-from datetime import datetime
-from typing import Dict, List, Any, Set
-from pathlib import Path
 
 # Add parent directories to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -568,7 +565,7 @@ async def main():
         logger.info("✅ Demo environment ready!")
         
         # Run the comprehensive demo
-        results = await demo.run_comprehensive_modern_web_demo()
+        await demo.run_comprehensive_modern_web_demo()
         
         logger.info("🎉 JavaScript SPA & Modern Web Demo completed successfully!")
         

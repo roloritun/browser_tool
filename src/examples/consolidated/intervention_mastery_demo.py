@@ -629,7 +629,7 @@ class InterventionMasteryDemo:
         print("="*80)
         
         # Overall Summary
-        print(f"📊 OVERALL PERFORMANCE:")
+        print("📊 OVERALL PERFORMANCE:")
         print(f"├─ Scenarios Completed: {self.results['scenarios_completed']}/4")
         print(f"├─ Tools Demonstrated: {len(self.results['tools_demonstrated'])}/8 target tools")
         print(f"├─ Total Actions: {self.results['total_actions']}")
@@ -649,7 +649,7 @@ class InterventionMasteryDemo:
         demonstrated_tools = self.results["tools_demonstrated"]
         missing_tools = target_tools - demonstrated_tools
         
-        print(f"\n🔧 INTERVENTION TOOL COVERAGE ANALYSIS:")
+        print("\n🔧 INTERVENTION TOOL COVERAGE ANALYSIS:")
         print(f"├─ Target Intervention Tools: {len(target_tools)}")
         print(f"├─ Demonstrated: {len(demonstrated_tools & target_tools)}")
         print(f"├─ Coverage: {(len(demonstrated_tools & target_tools)/len(target_tools)*100):.1f}%")
@@ -657,10 +657,10 @@ class InterventionMasteryDemo:
         if missing_tools:
             print(f"└─ Missing Tools: {', '.join(sorted(missing_tools))}")
         else:
-            print(f"└─ ✅ COMPLETE INTERVENTION TOOL COVERAGE!")
+            print("└─ ✅ COMPLETE INTERVENTION TOOL COVERAGE!")
         
         # Scenario-by-scenario breakdown
-        print(f"\n📋 SCENARIO BREAKDOWN:")
+        print("\n📋 SCENARIO BREAKDOWN:")
         for scenario_name, data in self.results["scenarios"].items():
             status = "✅ PASS" if data["success"] else "❌ FAIL"
             print(f"├─ {scenario_name.replace('_', ' ').title()}: {status}")
@@ -676,7 +676,7 @@ class InterventionMasteryDemo:
             
         avg_intervention_time = total_duration / max(self.results["interventions_requested"], 1)
         
-        print(f"\n🤝 INTERVENTION PERFORMANCE METRICS:")
+        print("\n🤝 INTERVENTION PERFORMANCE METRICS:")
         print(f"├─ Intervention Completion Rate: {completion_rate:.1f}%")
         print(f"├─ Average Intervention Time: {avg_intervention_time:.1f}s")
         print(f"├─ CAPTCHA Success Rate: {(self.results['captchas_encountered']/max(1, self.results['captchas_encountered'])*100):.1f}%")
@@ -685,7 +685,7 @@ class InterventionMasteryDemo:
         # Overall performance
         success_rate = (self.results["scenarios_completed"] / 4) * 100
         
-        print(f"\n📈 OVERALL PERFORMANCE METRICS:")
+        print("\n📈 OVERALL PERFORMANCE METRICS:")
         print(f"├─ Success Rate: {success_rate:.1f}%")
         print(f"├─ Interventions/Scenario: {self.results['interventions_requested']/4:.1f}")
         print(f"└─ Average Scenario Duration: {total_duration/4:.1f}s")
