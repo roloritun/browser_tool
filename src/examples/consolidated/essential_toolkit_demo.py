@@ -43,6 +43,7 @@ Safety: Uses only educational and test websites with respectful automation pract
 Ethics: Respects robots.txt files and implements reasonable delays between requests.
 """
 
+from pathlib import Path
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -187,11 +188,8 @@ class EssentialToolkitDemo:
         )
 
     def _open_novnc_viewer(self):
-        """Open NoVNC viewer for human intervention"""
-        if self.novnc_url:
-            logger.info("🖥️ Opening NoVNC viewer for manual intervention...")
-            
-            # Generate advanced viewer
+        """Open advanced NoVNC viewer for live testing monitoring"""
+        try:
             viewer_html = generate_advanced_novnc_viewer(
                 novnc_url=self.novnc_url,
                 demo_name="Essential Browser Toolkit Demo",
@@ -199,18 +197,39 @@ class EssentialToolkitDemo:
                 show_intervention_controls=True
             )
             
-            # Save and open viewer
-            # viewer_path = "/tmp/essential_toolkit_viewer.html"
-            # with open(viewer_path, "w") as f:
-            #     f.write(viewer_html)
+            viewer_path = Path("/tmp/essential_toolkit_testing_viewer.html")
+            viewer_path.write_text(viewer_html)
+
             
-            # import webbrowser
-            # try:
-            #     webbrowser.open(f"file://{viewer_path}")
-            #     logger.info("✅ NoVNC viewer opened successfully")
-            # except Exception as e:
-            #     logger.warning(f"⚠️ Could not auto-open viewer: {e}")
-            #     logger.info(f"📖 Manual access: file://{viewer_path}")
+            logger.info(f"🖥️ Live testing viewer opened: file://{viewer_path}")
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Could not open viewer: {str(e)}")
+            logger.info(f"🌐 Direct NoVNC access: {self.novnc_url}")
+        # """Open NoVNC viewer for human intervention"""
+        # if self.novnc_url:
+        #     logger.info("🖥️ Opening NoVNC viewer for manual intervention...")
+            
+        #     # Generate advanced viewer
+        #     viewer_html = generate_advanced_novnc_viewer(
+        #         novnc_url=self.novnc_url,
+        #         demo_name="Essential Browser Toolkit Demo",
+        #         demo_description="Core browser automation capabilities demonstration",
+        #         show_intervention_controls=True
+        #     )
+            
+        #     # Save and open viewer
+        #     # viewer_path = "/tmp/essential_toolkit_viewer.html"
+        #     # with open(viewer_path, "w") as f:
+        #     #     f.write(viewer_html)
+            
+        #     # import webbrowser
+        #     # try:
+        #     #     webbrowser.open(f"file://{viewer_path}")
+        #     #     logger.info("✅ NoVNC viewer opened successfully")
+        #     # except Exception as e:
+        #     #     logger.warning(f"⚠️ Could not auto-open viewer: {e}")
+        #     #     logger.info(f"📖 Manual access: file://{viewer_path}")
 
     async def run_scenario_1_multi_site_navigation(self):
         """Scenario 1: Multi-site navigation workflow"""

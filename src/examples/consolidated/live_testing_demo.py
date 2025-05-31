@@ -259,17 +259,15 @@ class LiveTestingDemo:
                 show_intervention_controls=True
             )
             
-        #     viewer_path = Path("/tmp/live_testing_viewer.html")
-        #     viewer_path.write_text(viewer_html)
+            viewer_path = Path("/tmp/live_testing_viewer.html")
+            viewer_path.write_text(viewer_html)
+
             
-        #     import webbrowser
-        #     webbrowser.open(f"file://{viewer_path}")
+            logger.info(f"🖥️ Live testing viewer opened: file://{viewer_path}")
             
-        #     logger.info(f"🖥️ Live testing viewer opened: file://{viewer_path}")
-            
-        # except Exception as e:
-        #     logger.warning(f"⚠️ Could not open viewer: {str(e)}")
-        #     logger.info(f"🌐 Direct NoVNC access: {self.novnc_url}")
+        except Exception as e:
+            logger.warning(f"⚠️ Could not open viewer: {str(e)}")
+            logger.info(f"🌐 Direct NoVNC access: {self.novnc_url}")
 
     async def run_quick_validation(self):
         """Quick validation test of all 44 tools"""

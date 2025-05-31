@@ -32,6 +32,7 @@ Safety: Uses only educational and test websites with respectful automation pract
 Ethics: Respects robots.txt files and implements reasonable delays between requests.
 """
 
+from pathlib import Path
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -169,17 +170,36 @@ class InterventionMasteryDemo:
         )
 
     def _open_novnc_viewer(self):
-        """Open NoVNC viewer with intervention-specific features"""
-        if self.novnc_url:
-            logger.info("🖥️ Opening NoVNC viewer for human intervention...")
-            
-            # Generate advanced viewer with intervention focus
+        """Open advanced NoVNC viewer for live testing monitoring"""
+        try:
             viewer_html = generate_advanced_novnc_viewer(
                 novnc_url=self.novnc_url,
-                demo_name="Human Intervention Mastery Demo",
-                demo_description="Comprehensive human intervention capabilities demonstration - Active participation required!",
+                demo_name="Essential Browser Toolkit Demo",
+                demo_description="Core browser automation capabilities demonstration",
                 show_intervention_controls=True
             )
+            
+            viewer_path = Path("/tmp/intervention_mastery_testing_viewer.html")
+            viewer_path.write_text(viewer_html)
+
+            
+            logger.info(f"🖥️ Live testing viewer opened: file://{viewer_path}")
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Could not open viewer: {str(e)}")
+            logger.info(f"🌐 Direct NoVNC access: {self.novnc_url}")
+
+        # """Open NoVNC viewer with intervention-specific features"""
+        # if self.novnc_url:
+        #     logger.info("🖥️ Opening NoVNC viewer for human intervention...")
+            
+        #     # Generate advanced viewer with intervention focus
+        #     viewer_html = generate_advanced_novnc_viewer(
+        #         novnc_url=self.novnc_url,
+        #         demo_name="Human Intervention Mastery Demo",
+        #         demo_description="Comprehensive human intervention capabilities demonstration - Active participation required!",
+        #         show_intervention_controls=True
+        #     )
             
             # Save and open viewer
             # viewer_path = "/tmp/intervention_mastery_viewer.html"

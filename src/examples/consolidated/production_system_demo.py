@@ -452,7 +452,7 @@ class ProductionSystemDemo:
         print("="*80)
         
         # Overall Summary
-        print(f"📊 OVERALL PERFORMANCE:")
+        print("📊 OVERALL PERFORMANCE:")
         print(f"├─ Scenarios Completed: {self.results['scenarios_completed']}/3")
         print(f"├─ Tools Demonstrated: {len(self.results['tools_demonstrated'])}/12 target tools")
         print(f"├─ Production Tasks: {self.results['production_tasks']}")
@@ -472,7 +472,7 @@ class ProductionSystemDemo:
         demonstrated_tools = self.results["tools_demonstrated"]
         missing_tools = target_tools - demonstrated_tools
         
-        print(f"\n🔧 TOOL COVERAGE ANALYSIS:")
+        print("\n🔧 TOOL COVERAGE ANALYSIS:")
         print(f"├─ Target Tools: {len(target_tools)}")
         print(f"├─ Demonstrated: {len(demonstrated_tools)}")
         print(f"├─ Coverage: {(len(demonstrated_tools)/len(target_tools)*100):.1f}%")
@@ -480,17 +480,17 @@ class ProductionSystemDemo:
         if missing_tools:
             print(f"└─ Missing Tools: {', '.join(sorted(missing_tools))}")
         else:
-            print(f"└─ ✅ COMPLETE COVERAGE!")
+            print("└─ ✅ COMPLETE COVERAGE!")
         
         # Production Metrics Summary
-        print(f"\n🏭 PRODUCTION METRICS SUMMARY:")
+        print("\n🏭 PRODUCTION METRICS SUMMARY:")
         print(f"├─ Workflows Automated: {self.results['production_tasks']}")
         print(f"├─ Compliance Reports: {self.results['reports_generated']}")
         print(f"├─ Error Recovery Events: {self.results['errors_handled']}")
         print(f"└─ Performance Optimizations: {self.results['performance_optimizations']}")
         
         # Scenario-by-scenario breakdown
-        print(f"\n📋 SCENARIO BREAKDOWN:")
+        print("\n📋 SCENARIO BREAKDOWN:")
         for scenario_name, data in self.results["scenarios"].items():
             status = "✅ PASS" if data["success"] else "❌ FAIL"
             print(f"├─ {scenario_name.replace('_', ' ').title()}: {status}")
@@ -502,7 +502,7 @@ class ProductionSystemDemo:
         success_rate = (self.results["scenarios_completed"] / 3) * 100
         tasks_per_minute = self.results["production_tasks"] / (total_duration / 60)
         
-        print(f"\n📈 PERFORMANCE METRICS:")
+        print("\n📈 PERFORMANCE METRICS:")
         print(f"├─ Success Rate: {success_rate:.1f}%")
         print(f"├─ Production Tasks/Minute: {tasks_per_minute:.1f}")
         print(f"└─ Average Scenario Duration: {total_duration/3:.1f}s")
@@ -537,7 +537,7 @@ async def main():
         logger.info("✅ Demo environment ready!")
         
         # Run the comprehensive demo
-        results = await demo.run_comprehensive_production_system_demo()
+        await demo.run_comprehensive_production_system_demo()
         
         logger.info("🎉 Production System Demo completed successfully!")
         

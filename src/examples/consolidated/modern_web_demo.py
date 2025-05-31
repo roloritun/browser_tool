@@ -487,7 +487,7 @@ class ModernWebDemo:
         print("="*80)
         
         # Overall Summary
-        print(f"📊 OVERALL PERFORMANCE:")
+        print("📊 OVERALL PERFORMANCE:")
         print(f"├─ Scenarios Completed: {self.results['scenarios_completed']}/3")
         print(f"├─ Tools Demonstrated: {len(self.results['tools_demonstrated'])}/6 target tools")
         print(f"├─ Frameworks Tested: {len(self.results['frameworks_tested'])}")
@@ -504,7 +504,7 @@ class ModernWebDemo:
         demonstrated_tools = self.results["tools_demonstrated"]
         missing_tools = target_tools - demonstrated_tools
         
-        print(f"\n🔧 TOOL COVERAGE ANALYSIS:")
+        print("\n🔧 TOOL COVERAGE ANALYSIS:")
         print(f"├─ Target Tools: {len(target_tools)}")
         print(f"├─ Demonstrated: {len(demonstrated_tools)}")
         print(f"├─ Coverage: {(len(demonstrated_tools)/len(target_tools)*100):.1f}%")
@@ -512,17 +512,17 @@ class ModernWebDemo:
         if missing_tools:
             print(f"└─ Missing Tools: {', '.join(sorted(missing_tools))}")
         else:
-            print(f"└─ ✅ COMPLETE COVERAGE!")
+            print("└─ ✅ COMPLETE COVERAGE!")
         
         # Framework Testing Summary
-        print(f"\n🚀 FRAMEWORK TESTING SUMMARY:")
+        print("\n🚀 FRAMEWORK TESTING SUMMARY:")
         framework_list = ', '.join(sorted(self.results['frameworks_tested'])) if self.results['frameworks_tested'] else 'None'
         print(f"├─ Frameworks Tested: {framework_list}")
         print(f"├─ SPA Interactions: {self.results['spa_interactions']}")
         print(f"└─ Dynamic Content Events: {self.results['dynamic_content_handled']}")
         
         # Scenario-by-scenario breakdown
-        print(f"\n📋 SCENARIO BREAKDOWN:")
+        print("\n📋 SCENARIO BREAKDOWN:")
         for scenario_name, data in self.results["scenarios"].items():
             status = "✅ PASS" if data["success"] else "❌ FAIL"
             print(f"├─ {scenario_name.replace('_', ' ').title()}: {status}")
@@ -534,7 +534,7 @@ class ModernWebDemo:
         success_rate = (self.results["scenarios_completed"] / 3) * 100
         interactions_per_minute = self.results["spa_interactions"] / (total_duration / 60)
         
-        print(f"\n📈 PERFORMANCE METRICS:")
+        print("\n📈 PERFORMANCE METRICS:")
         print(f"├─ Success Rate: {success_rate:.1f}%")
         print(f"├─ SPA Interactions/Minute: {interactions_per_minute:.1f}")
         print(f"└─ Average Scenario Duration: {total_duration/3:.1f}s")

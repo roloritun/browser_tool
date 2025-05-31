@@ -39,14 +39,13 @@ Safety: Uses only educational and test websites with respectful automation pract
 Ethics: Respects robots.txt files and implements reasonable delays between requests.
 """
 
+from pathlib import Path
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 import asyncio
 import time
-from datetime import datetime
-from typing import Dict, List, Any
 
 from langchain_openai import AzureChatOpenAI
 from langchain.agents import create_react_agent, AgentExecutor
@@ -56,7 +55,7 @@ from src.tools.utilities.browser_tools_init import initialize_browser_tools
 from src.tools.utilities.sandbox_manager import SandboxManager
 from src.utils.logger import logger
 from src.utils.advanced_novnc_viewer import generate_advanced_novnc_viewer
-from src.utils.enhanced_agent_formatting import ImprovedReActOutputParser, create_enhanced_business_prompt
+from src.utils.enhanced_agent_formatting import create_enhanced_business_prompt
 
 # Load environment variables
 load_dotenv()
@@ -154,7 +153,7 @@ class AdvancedInteractionDemo:
                         if response.status == 200:
                             logger.info("✅ Browser services are ready!")
                             return True
-            except:
+            except Exception:
                 pass
             
             await asyncio.sleep(check_interval)
@@ -178,17 +177,35 @@ class AdvancedInteractionDemo:
         )
 
     def _open_novnc_viewer(self):
-        """Open NoVNC viewer for human intervention"""
-        if self.novnc_url:
-            logger.info("🖥️ Opening NoVNC viewer for manual intervention...")
-            
-            # Generate advanced viewer with interaction focus
+        """Open advanced NoVNC viewer for live testing monitoring"""
+        try:
             viewer_html = generate_advanced_novnc_viewer(
                 novnc_url=self.novnc_url,
                 demo_name="Advanced Interaction Demo",
                 demo_description="Advanced browser interaction capabilities demonstration",
-                show_intervention_controls=True,
+                show_intervention_controls=True
             )
+            
+            viewer_path = Path("/tmp/advanced_interaction_testing_viewer.html")
+            viewer_path.write_text(viewer_html)
+
+            
+            logger.info(f"🖥️ Live testing viewer opened: file://{viewer_path}")
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Could not open viewer: {str(e)}")
+            logger.info(f"🌐 Direct NoVNC access: {self.novnc_url}")
+            
+        # if self.novnc_url:
+        #     logger.info("🖥️ Opening NoVNC viewer for manual intervention...")
+            
+        #     # Generate advanced viewer with interaction focus
+        #     viewer_html = generate_advanced_novnc_viewer(
+        #         novnc_url=self.novnc_url,
+        #         demo_name="Advanced Interaction Demo",
+        #         demo_description="Advanced browser interaction capabilities demonstration",
+        #         show_intervention_controls=True,
+        #     )
             
             # Save and open viewer
             # viewer_path = "/tmp/advanced_interaction_viewer.html"
