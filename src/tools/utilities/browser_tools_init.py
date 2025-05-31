@@ -31,15 +31,61 @@ async def initialize_browser_tools(api_url: Optional[str] = None, sandbox_id: Op
     
     if not setup_result["success"]:
         raise Exception(f"Failed to set up browser tools: {setup_result.get('error', 'Unknown error')}")
-    
-    # Convert to LangChain Tool format
+     # Convert to LangChain Tool format
     tools = []
     for browser_tool in toolkit.get_tools():
+        # Create a wrapper function that handles the config parameter
+        # Use default parameter to capture the tool in closure properly
+        def create_tool_wrapper(tool=browser_tool):
+            def wrapper(input_str="", *args, config=None, **kwargs):
+                import json
+                
+                # Check if tool has args_schema and if it's NoParamsInput
+                if hasattr(tool, 'args_schema') and tool.args_schema is not None:
+                    from src.tools.langchain_browser_tool import NoParamsInput
+                    if tool.args_schema == NoParamsInput:
+                        # Tool doesn't need parameters, call without arguments
+                        return tool._run()
+                    else:
+                        # Tool expects parameters, handle different input formats
+                        if kwargs:
+                            # Use kwargs directly if provided
+                            return tool._run(**kwargs)
+                        elif input_str and input_str.strip():
+                            # Try to parse input_str as JSON first for multi-parameter tools
+                            try:
+                                params = json.loads(input_str)
+                                if isinstance(params, dict):
+                                    return tool._run(**params)
+                                else:
+                                    # Single parameter tools
+                                    schema_fields = list(tool.args_schema.__fields__.keys())
+                                    if len(schema_fields) == 1:
+                                        return tool._run(**{schema_fields[0]: params})
+                                    else:
+                                        return tool._run(input_str)
+                            except (json.JSONDecodeError, TypeError):
+                                # Not JSON, try to handle as simple parameter
+                                schema_fields = list(tool.args_schema.__fields__.keys())
+                                if len(schema_fields) == 1:
+                                    # Single parameter tool
+                                    return tool._run(**{schema_fields[0]: input_str})
+                                else:
+                                    # Multi-parameter tool, can't parse as single string
+                                    return {"success": False, "error": f"Tool {tool.name} requires multiple parameters. Please provide JSON input with keys: {schema_fields}"}
+                        else:
+                            return tool._run()
+                else:
+                    # No args_schema, call without arguments
+                    return tool._run()
+            wrapper.__name__ = f"{tool.name}_wrapper"
+            return wrapper
+
         tools.append(
             Tool(
                 name=browser_tool.name,
                 description=browser_tool.description,
-                func=browser_tool._run
+                func=create_tool_wrapper()
             )
         )
     

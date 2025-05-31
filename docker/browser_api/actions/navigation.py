@@ -88,14 +88,15 @@ class NavigationActions:
             try:
                 await page.goto("https://www.google.com", timeout=30000, wait_until="domcontentloaded")
                 
-                # Wait for the search input to be available
-                await page.wait_for_selector('input[name="q"]', timeout=5000)
+                # Wait for the search input to be available (Google now uses textarea instead of input)
+                search_selector = ':is(textarea[name="q"], input[name="q"])'
+                await page.wait_for_selector(search_selector, timeout=5000)
                 
                 # Type the search query
-                await page.fill('input[name="q"]', query)
+                await page.fill(search_selector, query)
                 
                 # Submit the search
-                await page.press('input[name="q"]', "Enter")
+                await page.press(search_selector, "Enter")
                 
                 # Wait for the search results to load
                 await page.wait_for_load_state("networkidle", timeout=10000)
