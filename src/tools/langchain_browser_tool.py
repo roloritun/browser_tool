@@ -167,13 +167,13 @@ class SendKeysInput(BaseModel):
     keys: str = Field(description="Keys to send")
 
 class SwitchTabInput(BaseModel):
-    page_id: str = Field(description="ID of the tab to switch to")
+    tab_index: int = Field(description="Index of the tab to switch to")
 
 class OpenTabInput(BaseModel):
     url: str = Field(description="URL to open in new tab")
 
 class CloseTabInput(BaseModel):
-    page_id: str = Field(description="ID of the tab to close")
+    tab_index: int = Field(description="Index of the tab to close")
 
 class ExtractContentInput(BaseModel):
     goal: str = Field(description="Goal for content extraction")
@@ -192,7 +192,7 @@ class GetDropdownOptionsInput(BaseModel):
 
 class SelectDropdownOptionInput(BaseModel):
     index: int = Field(description="Index of the dropdown element")
-    option: str = Field(description="Option to select")
+    option_text: str = Field(description="Option text to select")
 
 class ClickCoordinatesInput(BaseModel):
     x: int = Field(description="X coordinate")
@@ -218,7 +218,7 @@ class CookieInput(BaseModel):
     path: Optional[str] = Field(default="/", description="Cookie path")
 
 class FrameInput(BaseModel):
-    frame_selector: str = Field(description="CSS selector for the frame")
+    frame_selector: Dict[str, Any] = Field(description="CSS selector for the frame")
 
 class NetworkConditionsInput(BaseModel):
     offline: Optional[bool] = Field(default=False, description="Simulate offline")
@@ -231,7 +231,7 @@ class InterventionRequestInput(BaseModel):
     instructions: Optional[str] = Field(default=None, description="Instructions for the human")
     timeout_seconds: Optional[int] = Field(default=300, description="Timeout in seconds")
     context: Optional[Dict[str, Any]] = Field(default=None, description="Additional context")
-    take_screenshot: Optional[bool] = Field(default=True, description="Take screenshot")
+    take_screenshot: Optional[bool] = Field(default=False, description="Take screenshot")
     auto_detect: Optional[bool] = Field(default=False, description="Auto-detect intervention need")
 
 class InterventionCompleteInput(BaseModel):
@@ -465,7 +465,7 @@ class SwitchTabTool(BrowserToolBase):
     args_schema: Optional[Type[BaseModel]] = SwitchTabInput
     
     @BrowserToolBase.requires_setup
-    def _run(self, page_id: int) -> Dict[str, Any]:
+    def _run(self, tab_index: int) -> Dict[str, Any]:
         # Handle event loop properly for LangChain compatibility
         try:
             loop = asyncio.get_event_loop()
@@ -473,13 +473,13 @@ class SwitchTabTool(BrowserToolBase):
                 # If loop is already running, create a new one in a thread
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(asyncio.run, self._execute_browser_action("switch_tab", {"page_id": page_id}))
+                    future = executor.submit(asyncio.run, self._execute_browser_action("switch_tab", {"tab_index": tab_index}))
                     result = future.result()
             else:
-                result = loop.run_until_complete(self._execute_browser_action("switch_tab", {"page_id": page_id}))
+                result = loop.run_until_complete(self._execute_browser_action("switch_tab", {"tab_index": tab_index}))
         except RuntimeError:
             # No event loop running, create a new one
-            result = asyncio.run(self._execute_browser_action("switch_tab", {"page_id": page_id}))
+            result = asyncio.run(self._execute_browser_action("switch_tab", {"tab_index": tab_index}))
         except Exception as e:
             result = {"success": False, "error": f"Error in switch_tab: {str(e)}"}
         
@@ -519,7 +519,7 @@ class CloseTabTool(BrowserToolBase):
     args_schema: Optional[Type[BaseModel]] = CloseTabInput
     
     @BrowserToolBase.requires_setup
-    def _run(self, page_id: int) -> Dict[str, Any]:
+    def _run(self, tab_index: int) -> Dict[str, Any]:
         # Handle event loop properly for LangChain compatibility
         try:
             loop = asyncio.get_event_loop()
@@ -527,13 +527,13 @@ class CloseTabTool(BrowserToolBase):
                 # If loop is already running, create a new one in a thread
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(asyncio.run, self._execute_browser_action("close_tab", {"page_id": page_id}))
+                    future = executor.submit(asyncio.run, self._execute_browser_action("close_tab", {"tab_index": tab_index}))
                     result = future.result()
             else:
-                result = loop.run_until_complete(self._execute_browser_action("close_tab", {"page_id": page_id}))
+                result = loop.run_until_complete(self._execute_browser_action("close_tab", {"tab_index": tab_index}))
         except RuntimeError:
             # No event loop running, create a new one
-            result = asyncio.run(self._execute_browser_action("close_tab", {"page_id": page_id}))
+            result = asyncio.run(self._execute_browser_action("close_tab", {"tab_index": tab_index}))
         except Exception as e:
             result = {"success": False, "error": f"Error in close_tab: {str(e)}"}
         
@@ -681,7 +681,7 @@ class GetDropdownOptionsTool(BrowserToolBase):
 
 class SelectDropdownOptionTool(BrowserToolBase):
     name: str = "browser_select_dropdown_option"
-    description: str = "Select an option from a dropdown by text. Requires JSON input with 'index' (int) and 'option' (str). Example: {\"index\": 0, \"option\": \"Option 1\"}"
+    description: str = "Select an option from a dropdown by text. Requires JSON input with 'index' (int) and 'option_text' (str). Example: {\"index\": 0, \"option_text\": \"Option 1\"}"
     args_schema: Optional[Type[BaseModel]] = SelectDropdownOptionInput
     
     @BrowserToolBase.requires_setup
@@ -1004,7 +1004,7 @@ class SwitchToFrameTool(BrowserToolBase):
     args_schema: Optional[Type[BaseModel]] = FrameInput
     
     @BrowserToolBase.requires_setup
-    def _run(self, frame_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _run(self, frame_selector: Dict[str, Any]) -> Dict[str, Any]:
         # Handle event loop properly for LangChain compatibility
         try:
             loop = asyncio.get_event_loop()
@@ -1012,13 +1012,13 @@ class SwitchToFrameTool(BrowserToolBase):
                 # If loop is already running, create a new one in a thread
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(asyncio.run, self._execute_browser_action("switch_to_frame", frame_data))
+                    future = executor.submit(asyncio.run, self._execute_browser_action("switch_to_frame", frame_selector))
                     result = future.result()
             else:
-                result = loop.run_until_complete(self._execute_browser_action("switch_to_frame", frame_data))
+                result = loop.run_until_complete(self._execute_browser_action("switch_to_frame", frame_selector))
         except RuntimeError:
             # No event loop running, create a new one
-            result = asyncio.run(self._execute_browser_action("switch_to_frame", frame_data))
+            result = asyncio.run(self._execute_browser_action("switch_to_frame", frame_selector))
         except Exception as e:
             result = {"success": False, "error": f"Error in switch_to_frame: {str(e)}"}
         
@@ -1131,7 +1131,7 @@ class SolveCaptchaTool(BrowserToolBase):
     
     @BrowserToolBase.requires_setup
     def _run(self, reason: str, instructions: Optional[str] = None, 
-             screenshot: bool = True, timeout_seconds: int = 300) -> Dict[str, Any]:
+             screenshot: bool = False, timeout_seconds: int = 300) -> Dict[str, Any]:
         logger.info("Requesting human help to solve CAPTCHA")
         
         data = {
@@ -1224,7 +1224,7 @@ class RequestInterventionTool(BrowserToolBase):
     @BrowserToolBase.requires_setup
     def _run(self, intervention_type: str, message: str, instructions: Optional[str] = None,
              timeout_seconds: int = 300, context: Optional[Dict[str, Any]] = None,
-             take_screenshot: bool = True, auto_detect: bool = False) -> Dict[str, Any]:
+             take_screenshot: bool = False, auto_detect: bool = False) -> Dict[str, Any]:
         data = {
             "intervention_type": intervention_type,
             "message": message,

@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-from typing import Optional
 
 
 # Set up logging
@@ -26,7 +25,7 @@ class ColoredFormatter(logging.Formatter):
 
 # Create logger
 logger = logging.getLogger("browser_tools")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
 
 # Avoid adding handlers multiple times
 if not logger.handlers:

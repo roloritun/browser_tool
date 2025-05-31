@@ -19,7 +19,6 @@ import tempfile
 from pathlib import Path
 from typing import Optional, Dict, Any
 import time
-import os
 
 
 def generate_advanced_novnc_viewer(
@@ -689,7 +688,7 @@ def generate_advanced_novnc_viewer(
         # Auto-open in browser if requested
         if auto_open:
             webbrowser.open(f"file://{file_path}")
-            print(f"🌐 Advanced NoVNC viewer opened in browser")
+            print("🌐 Advanced NoVNC viewer opened in browser")
             
         return str(file_path)
         

@@ -164,6 +164,11 @@ BUSINESS ETHICS:
 - Never attempt unauthorized access
 - Maintain professional research standards
 
+⚠️ CONTEXT MANAGEMENT:
+- Chat history is aggressively managed to prevent context overflow
+- Previous conversation may be summarized to stay within token limits
+- If context appears minimal, this is intentional for system stability
+
 CONVERSATION HISTORY:
 {chat_history}
 

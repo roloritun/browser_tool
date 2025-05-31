@@ -137,7 +137,7 @@ class InterventionAwareBrowserTool(BrowserToolBase):
             'option_text': 'option_text',
             
             # Tab operations
-            'tab_index': 'page_id',  # SwitchTabAction, CloseTabAction
+            'tab_index': 'tab_index',  # SwitchTabAction, CloseTabAction (use primary field)
             'page_id': 'page_id',
             
             # Content extraction
@@ -363,13 +363,15 @@ class InterventionAwareBrowserTool(BrowserToolBase):
         
         # Map detected types to our enum
         type_mapping = {
-            "captcha": InterventionType.CAPTCHA,
+            "captcha": InterventionType.CAPTCHA_REQUIRED,
             "login_required": InterventionType.LOGIN_REQUIRED,
             "security_check": InterventionType.SECURITY_CHECK,
             "anti_bot_protection": InterventionType.ANTI_BOT_PROTECTION,
             "cookies_consent": InterventionType.COOKIES_CONSENT,
             "two_factor_auth": InterventionType.TWO_FACTOR_AUTH,
-            "age_verification": InterventionType.AGE_VERIFICATION
+            "age_verification": InterventionType.AGE_VERIFICATION,
+            "complex_data_entry": InterventionType.COMPLEX_DATA_ENTRY,
+            "custom": InterventionType.CUSTOM
         }
         
         # Use the first detected type or CUSTOM if unknown
@@ -378,11 +380,14 @@ class InterventionAwareBrowserTool(BrowserToolBase):
         
         # Create appropriate message and instructions
         messages = {
-            InterventionType.CAPTCHA: "CAPTCHA verification required",
+            InterventionType.CAPTCHA_REQUIRED: "CAPTCHA verification required",
             InterventionType.LOGIN_REQUIRED: "Login required to continue",
             InterventionType.SECURITY_CHECK: "Security verification needed",
             InterventionType.ANTI_BOT_PROTECTION: "Anti-bot protection detected",
-            InterventionType.COOKIES_CONSENT: "Cookie consent required"
+            InterventionType.COOKIES_CONSENT: "Cookie consent required",
+            InterventionType.TWO_FACTOR_AUTH: "Two-factor authentication required",
+            InterventionType.AGE_VERIFICATION: "Age verification required",
+            InterventionType.COMPLEX_DATA_ENTRY: "Complex data entry required"
         }
         
         message = messages.get(intervention_type, f"Human intervention needed: {primary_type}")
@@ -1609,8 +1614,18 @@ class SmartRequestInterventionTool(InterventionAwareBrowserTool):
             instructions = params.get('instructions')
             timeout_seconds = params.get('timeout_seconds', 300)
             context = params.get('context', {})
-            take_screenshot = params.get('take_screenshot', True)
+            take_screenshot = params.get('take_screenshot', False)
             auto_detect = params.get('auto_detect', False)
+            
+            # Handle composite intervention types by selecting the primary one
+            if '_and_' in intervention_type:
+                logger.warning(f"Composite intervention type detected: '{intervention_type}'. Selecting the primary type.")
+                intervention_type = intervention_type.split('_and_')[0]
+            
+            # Ensure context is a dictionary
+            if isinstance(context, str):
+                logger.warning(f"Context was provided as string: '{context}'. Converting to dictionary.")
+                context = {"description": context}
             
             # Validate intervention type
             if intervention_type not in valid_types:
@@ -1633,7 +1648,7 @@ class SmartRequestInterventionTool(InterventionAwareBrowserTool):
             else:
                 return f"Request intervention failed: {result.get('error', 'Unknown error')}"
         except Exception as e:
-            return f"Error requesting intervention: {str(e)}"
+            return f"Error requesting intervention: {str(e)}. Remember: 'intervention_type' must be one of {', '.join(valid_types)} and 'context' must be a dictionary."
 
 
 class SmartCompleteInterventionTool(InterventionAwareBrowserTool):

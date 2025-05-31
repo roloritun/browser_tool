@@ -51,7 +51,7 @@ class SandboxManager:
         print("🚀 Creating Daytona sandbox with Chrome browser and human intervention support...")
 
         # Custom Docker image containing Chrome and necessary components
-        image = "harbor-transient.internal.daytona.app/daytona/composer:4.0.9"
+        image = "harbor-transient.internal.daytona.app/daytona/composer:4.1.3"
         # os.getenv(
         #     "DAYTONA_IMAGE",
         #     "harbor-transient.internal.daytona.app/daytona/roloritun/compose:0.0.1"
@@ -123,7 +123,7 @@ class SandboxManager:
                 print("=" * 60)
                 print("For human intervention during automation:")
                 print(f"• Browser Access (NoVNC): {novnc_url}")
-                print(f"• VNC Password: {os.getenv('VNC_PASSWORD', 'vncpassword')}")
+ #               print(f"• VNC Password: {os.getenv('VNC_PASSWORD', 'vncpassword')}")
                 print(f"• API Endpoints: {api_url}/docs")
                 print("• When intervention is needed, you'll see a red banner on the page")
                 print("• Complete the task manually and click 'Task Complete' to resume")

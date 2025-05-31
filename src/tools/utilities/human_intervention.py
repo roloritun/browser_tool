@@ -29,6 +29,7 @@ class InterventionType:
     AGE_VERIFICATION = "age_verification"
     CUSTOM = "custom"
 
+
 class EnhancedHumanInterventionBase:
     """Enhanced base class for human intervention tools with API integration."""
     
@@ -56,7 +57,7 @@ class EnhancedHumanInterventionBase:
                 "instructions": instructions,
                 "timeout_seconds": timeout_seconds,
                 "context": context or {},
-                "take_screenshot": True,
+                "take_screenshot": False,
                 "auto_detect": False
             }
             
@@ -106,13 +107,13 @@ class EnhancedHumanInterventionBase:
                                 return {"success": True, "message": "Human intervention completed"}
                             elif status == "cancelled":
                                 self._logger.info("❌ Human intervention was cancelled")
-                                return {"success": False, "error": "Intervention cancelled by user"}
+                                return {"success": False, "error": "Intervention cancelled by user or system", "status": "cancelled"}
                             elif status == "timeout":
                                 self._logger.warning("⏰ Human intervention timed out")
-                                return {"success": False, "error": "Intervention timed out"}
+                                return {"success": False, "error": "Intervention timed out", "status": "timeout"}
                             elif status == "failed":
                                 self._logger.error("❌ Human intervention failed")
-                                return {"success": False, "error": "Intervention failed"}
+                                return {"success": False, "error": "Intervention failed", "status": "failed"}
                             
                             # Still pending, continue polling
                             time_remaining = content.get("time_remaining", 0)
@@ -125,7 +126,19 @@ class EnhancedHumanInterventionBase:
         
         # Timeout reached
         self._logger.error("⏰ Timeout waiting for intervention completion")
-        return {"success": False, "error": "Timeout waiting for intervention completion"}
+        try:
+            # Try to cancel the intervention due to API timeout
+            url = f"{self.api_base_url}/automation/cancel_intervention"
+            payload = {
+                "intervention_id": intervention_id,
+                "reason": "Cancelled due to API polling timeout"
+            }
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                await client.post(url, json=payload)
+        except Exception as e:
+            self._logger.error(f"Error cancelling timed out intervention: {e}")
+            
+        return {"success": False, "error": "Timeout waiting for intervention completion", "status": "timeout"}
     
     async def auto_detect_and_handle(self) -> Dict[str, Any]:
         """Automatically detect and handle common intervention scenarios"""

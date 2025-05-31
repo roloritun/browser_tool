@@ -371,6 +371,7 @@ class HumanInterventionActions:
             'anti_bot_protection': '🤖',
             'cookies_consent': '🍪',
             'two_factor_auth': '📱',
+            'age_verification': '🔞',
             'custom': '⚠️'
         }};
         
@@ -432,6 +433,14 @@ class HumanInterventionActions:
             window.interventionCompleted = '{intervention.id}';
             notice.style.background = 'linear-gradient(135deg, #28a745, #1e7e34)';
             notice.innerHTML = '<div style="font-size: 18px;">✅ Intervention completed! Resuming automation...</div>';
+            
+            // Make an API call to notify the server
+            fetch('/automation/complete_intervention', {{
+                method: 'POST',
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify({{ intervention_id: '{intervention.id}', success: true }})
+            }}).catch(err => console.error('Error completing intervention:', err));
+            
             setTimeout(() => notice.remove(), 3000);
         }};
         
@@ -439,6 +448,14 @@ class HumanInterventionActions:
             window.interventionCancelled = '{intervention.id}';
             notice.style.background = 'linear-gradient(135deg, #dc3545, #bd2130)';
             notice.innerHTML = '<div style="font-size: 18px;">❌ Intervention cancelled!</div>';
+            
+            // Make an API call to notify the server
+            fetch('/automation/cancel_intervention', {{
+                method: 'POST',
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify({{ intervention_id: '{intervention.id}', reason: 'User cancelled' }})
+            }}).catch(err => console.error('Error cancelling intervention:', err));
+            
             setTimeout(() => notice.remove(), 3000);
         }};
         """
